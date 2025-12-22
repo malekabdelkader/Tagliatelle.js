@@ -35,6 +35,13 @@ Instead of sneaking server code into your React components, let's do the **oppos
 
 **Tagliatelle.js: Because if we're going to make everything look like PHP anyway, we might as well make it delicious.** 🍝
 
+### Why "Tagliatelle"?
+
+- **`<Tag>`** — Because we write everything in JSX tags. `<Server>`, `<Route>`, `<Response>`... it's tags all the way down.
+- **Tagliatelle** — It's pasta. Because frontend developers clearly want to write spaghetti code in the backend. 🍝
+
+*At least this spaghetti is type-safe and al dente.*
+
 ---
 
 ## 🚀 Quick Start
