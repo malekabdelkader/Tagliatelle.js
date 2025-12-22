@@ -6,11 +6,9 @@
  * DELETE /posts/:id  - Delete a post
  */
 
-import { h, Response, Status, Body, Err } from '../../tagliatelle.js';
-import type { HandlerProps } from '../../types.js';
+import { Response, Status, Body, Err } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
 import { posts } from './_data.js';
-
-void h; // JSX factory
 
 interface PostParams {
   id: string;
@@ -99,4 +97,3 @@ export async function DELETE({ params, log }: HandlerProps<PostParams>) {
     </Response>
   );
 }
-

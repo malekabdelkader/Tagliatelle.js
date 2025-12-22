@@ -5,13 +5,10 @@
  * Use JSX components to configure!
  */
 
-import { h, Fragment, Logger } from '../tagliatelle.js';
-
-void h;
+import { Logger } from 'tagliatelle';
 
 export default () => (
   <>
     <Logger level="info" />
   </>
 );
-

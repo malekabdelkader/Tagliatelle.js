@@ -8,12 +8,9 @@
  * - Safe key comparison
  */
 
-import { h, Augment, Err } from '../tagliatelle.js';
+import { Augment, Err, authFailureTracker, isSafeString } from 'tagliatelle';
+import type { HandlerProps, MiddlewareFunction } from 'tagliatelle';
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { HandlerProps, MiddlewareFunction } from '../types.js';
-import { authFailureTracker, isSafeString } from '../security.js';
-
-void h; // JSX factory
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🔐 AUTH MIDDLEWARE
@@ -215,4 +212,3 @@ export function requirePermission(permission: string): MiddlewareFunction {
     return;
   };
 }
-

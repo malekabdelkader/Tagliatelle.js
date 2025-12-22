@@ -5,11 +5,9 @@
  * POST /posts     - Create a new post
  */
 
-import { h, Response, Status, Body, Err } from '../../tagliatelle.js';
-import type { HandlerProps } from '../../types.js';
+import { Response, Status, Body, Err } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
 import { posts } from './_data.js';
-
-void h; // JSX factory
 
 interface CreatePostBody {
   title: string;
@@ -73,4 +71,3 @@ export async function POST({ body, log, user }: HandlerProps<unknown, CreatePost
     </Response>
   );
 }
-

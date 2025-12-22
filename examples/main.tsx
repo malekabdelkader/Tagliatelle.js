@@ -8,14 +8,12 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { 
-  h,
-  Fragment,
   render, 
   Server, 
   Logger,
   Cors,
   Routes
-} from './tagliatelle.js';
+} from 'tagliatelle';
 
 // Get the directory of this file
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -42,9 +40,5 @@ const App = () => (
 // ═══════════════════════════════════════════════════════════════════════════
 // 🚀 START THE SERVER
 // ═══════════════════════════════════════════════════════════════════════════
-
-// Suppress unused variable warnings for JSX factory
-void h;
-void Fragment;
 
 render(<App />);

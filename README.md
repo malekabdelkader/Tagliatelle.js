@@ -1,65 +1,40 @@
 # 🍝 `<Tag>liatelle.js`
 
-> **The Declarative Backend Framework.** Why write dry, linear routing when you can serve up a delicious plate of functional spaghetti?
+> **The Declarative Backend Framework.** Build APIs with JSX. Yes, really.
 
-`<Tag>liatelle.js` is a **TypeScript** backend framework built on top of **Fastify** that treats your API architecture like a UI component tree. Using JSX/TSX, you define your routes, middleware, and responses as a visual hierarchy.
+`<Tag>liatelle.js` is a **TypeScript** backend framework built on top of **Fastify** that treats your API architecture like a component tree. Using JSX/TSX, you define your routes, middleware, and responses as a visual hierarchy.
 
 **If you can write React, you can build a high-performance backend.**
 
----
+```tsx
+import { render, Server, Logger, Cors, Routes } from 'tagliatelle';
 
-## 🤌 Why `<Tag>liatelle.js`?
+const App = () => (
+  <Server port={3000}>
+    <Logger level="info" />
+    <Cors origin="*">
+      <Routes dir="./routes" />
+    </Cors>
+  </Server>
+);
 
-| Feature | Description |
-|---------|-------------|
-| **File-Based Routing** | Next.js-style routing - your file structure IS your API |
-| **JSX Responses** | Return `<Response><Status code={201} /><Body data={...} /></Response>` |
-| **JSX Middleware** | Use `<Err>` and `<Augment>` in middleware for clean auth flows |
-| **JSX Config** | Configure routes with `<Logger>`, `<Middleware>`, `<RateLimiter>` |
-| **Full TypeScript** | End-to-end type safety with `HandlerProps<TParams, TBody, TQuery>` |
-| **Zero Boilerplate** | Handlers just return data or JSX, no `res.send()` |
-
----
-
-## 📂 Project Structure
-
-```
-my-api/
-├── src/
-│   ├── main.tsx              # Server entry point
-│   ├── routes/               # File-based routing
-│   │   ├── _config.tsx       # Global route config
-│   │   ├── index.tsx         # GET /
-│   │   ├── health.tsx        # GET /health
-│   │   └── posts/
-│   │       ├── _config.tsx   # Config for /posts/*
-│   │       ├── index.tsx     # GET/POST /posts
-│   │       └── [id].tsx      # GET/PUT/DELETE /posts/:id
-│   ├── middleware/
-│   │   └── auth.tsx          # JSX middleware!
-│   └── tagliatelle.ts        # Framework core
-├── tsconfig.json
-└── package.json
+render(<App />);
 ```
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Install dependencies
+### Create a new project
 
 ```bash
+npx tagliatelle init my-api
+cd my-api
 npm install
+npm run dev
 ```
 
-### 2. Start the server
-
-```bash
-npm run dev    # Development with hot reload
-npm start      # Production
-```
-
-### 3. Test your API
+That's it! Your API is running at `http://localhost:3000` 🍝
 
 ```bash
 curl http://localhost:3000/health
@@ -71,26 +46,102 @@ curl http://localhost:3000/posts
 
 ---
 
+## 🤌 Why `<Tag>liatelle.js`?
+
+| Feature | Description |
+|---------|-------------|
+| **File-Based Routing** | Next.js-style routing — your file structure IS your API |
+| **JSX Responses** | Return `<Response><Status code={201} /><Body data={...} /></Response>` |
+| **JSX Middleware** | Use `<Err>` and `<Augment>` for clean auth flows |
+| **JSX Config** | Configure routes with `<Logger>`, `<Middleware>`, `<RateLimiter>` |
+| **Full TypeScript** | End-to-end type safety with `HandlerProps<TParams, TBody, TQuery>` |
+| **Zero Boilerplate** | Handlers return data or JSX — no `res.send()` needed |
+| **CLI Scaffolding** | `npx tagliatelle init` creates a ready-to-run project |
+
+---
+
+## 📦 Installation
+
+### New Project (Recommended)
+
+```bash
+npx tagliatelle init my-api
+```
+
+### Add to Existing Project
+
+```bash
+npm install tagliatelle
+```
+
+Then configure your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "tagliatelle"
+  }
+}
+```
+
+---
+
+## 📂 Project Structure
+
+```
+my-api/
+├── server.tsx              # Server entry point
+├── routes/                 # File-based routing
+│   ├── _config.tsx         # Global route config
+│   ├── index.tsx           # GET /
+│   ├── health.tsx          # GET /health
+│   └── posts/
+│       ├── _config.tsx     # Config for /posts/*
+│       ├── _data.ts        # Shared data (not a route)
+│       ├── index.tsx       # GET/POST /posts
+│       └── [id].tsx        # GET/PUT/DELETE /posts/:id
+├── middleware/
+│   └── auth.tsx            # JSX middleware
+├── tsconfig.json
+└── package.json
+```
+
+---
+
 ## 🍽️ Server Configuration
 
-### `main.tsx`
+### `server.tsx`
 
 ```tsx
-import { h, render, Server, Logger, Routes } from './tagliatelle.js';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { render, Server, Logger, Cors, Routes } from 'tagliatelle';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const App = () => (
-  <Server 
-    port={3000} 
-    cors={{ origin: true, credentials: true }}
-  >
+  <Server port={3000}>
     <Logger level="info" />
-    <Routes dir={path.join(__dirname, 'routes')} />
+    <Cors origin="*">
+      <Routes dir={path.join(__dirname, 'routes')} />
+    </Cors>
   </Server>
 );
 
 render(<App />);
 ```
+
+### Server Components
+
+| Component | Description |
+|-----------|-------------|
+| `<Server port={3000}>` | Main server wrapper |
+| `<Logger level="info" />` | Configure logging level |
+| `<Cors origin="*">` | Enable CORS |
+| `<Routes dir="./routes" />` | Load file-based routes |
+| `<RateLimiter max={100} timeWindow="1 minute" />` | Rate limiting |
+| `<Middleware use={fn} />` | Add global middleware |
 
 ---
 
@@ -110,8 +161,8 @@ Your file structure becomes your API:
 
 ```tsx
 // routes/posts/[id].tsx
-import { h, Response, Status, Body, Err } from '../../tagliatelle.js';
-import type { HandlerProps } from '../../types.js';
+import { Response, Status, Body, Err } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
 
 interface PostParams { id: string }
 
@@ -134,6 +185,7 @@ export async function GET({ params, log }: HandlerProps<PostParams>) {
 
 export async function DELETE({ params }: HandlerProps<PostParams>) {
   await db.posts.delete(params.id);
+  
   return (
     <Response>
       <Status code={200} />
@@ -152,7 +204,7 @@ Create `_config.tsx` files to configure routes per directory:
 ### `routes/_config.tsx` (Global)
 
 ```tsx
-import { h, Fragment, Logger } from '../tagliatelle.js';
+import { Logger } from 'tagliatelle';
 
 export default () => (
   <>
@@ -164,11 +216,12 @@ export default () => (
 ### `routes/posts/_config.tsx` (Posts-specific)
 
 ```tsx
-import { h, Fragment, Logger, Middleware, RateLimiter } from '../../tagliatelle.js';
-import { authMiddleware } from '../../middleware/auth.tsx';
+import { Logger, Middleware, RateLimiter } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
+import { authMiddleware } from '../middleware/auth.js';
 
 // Only require auth for write operations
-const writeAuthMiddleware = async (props, request, reply) => {
+const writeAuthMiddleware = async (props: HandlerProps, request, reply) => {
   if (['GET', 'HEAD', 'OPTIONS'].includes(request.method)) {
     return; // Skip auth for reads
   }
@@ -183,15 +236,6 @@ export default () => (
   </>
 );
 ```
-
-### Config Components
-
-| Component | Description |
-|-----------|-------------|
-| `<Logger level="debug" />` | Set log level for this directory |
-| `<Middleware use={fn} />` | Add middleware (stacks with parent) |
-| `<RateLimiter max={100} timeWindow="1 minute" />` | Rate limiting |
-| `<Group prefix="/v1" />` | Add URL prefix |
 
 ### Config Inheritance
 
@@ -219,7 +263,7 @@ return (
   </Response>
 );
 
-// Error response
+// Error response (shorthand)
 return <Err code={404} message="Not found" />;
 
 // With custom headers
@@ -241,7 +285,6 @@ return (
 | `<Body data={{...}} />` | Set JSON response body |
 | `<Headers headers={{...}} />` | Set custom headers |
 | `<Err code={404} message="..." />` | Error response shorthand |
-| `<Augment user={...} />` | Augment handler props (middleware) |
 
 ---
 
@@ -249,36 +292,31 @@ return (
 
 Middleware can use JSX components for responses and prop augmentation!
 
-### Creating Middleware (JSX Style)
+### Creating Middleware
 
 ```tsx
 // middleware/auth.tsx
-import { h, Augment, Err } from '../tagliatelle.js';
-import type { MiddlewareFunction } from '../types.js';
-
-void h; // JSX factory
+import { Augment, Err, authFailureTracker, isSafeString } from 'tagliatelle';
+import type { HandlerProps, MiddlewareFunction } from 'tagliatelle';
 
 export const authMiddleware: MiddlewareFunction = async (props, request, reply) => {
   const apiKey = request.headers['x-api-key'];
   
   // Return JSX error response
-  if (!apiKey) {
-    return <Err code={401} message="Missing API key" />;
+  if (!apiKey || typeof apiKey !== 'string') {
+    return <Err code={401} message="Authentication required" />;
   }
   
   const user = await verifyToken(apiKey);
   
-  // Augment props with JSX component
+  if (!user) {
+    return <Err code={401} message="Invalid credentials" />;
+  }
+  
+  // Augment props with user data
   return <Augment user={user} />;
 };
 ```
-
-### Middleware Components
-
-| Component | Description |
-|-----------|-------------|
-| `<Err code={401} message="..." />` | Return error and halt chain |
-| `<Augment user={...} />` | Add data to handler props |
 
 ### Middleware Factory Pattern
 
@@ -289,10 +327,10 @@ export function requireRole(role: string): MiddlewareFunction {
     const user = props.user;
     
     if (!user || user.role !== role) {
-      return <Err code={403} message={`Requires "${role}" role`} />;
+      return <Err code={403} message="Access denied" />;
     }
     
-    return; // Continue
+    return; // Continue to handler
   };
 }
 
@@ -300,25 +338,12 @@ export function requireRole(role: string): MiddlewareFunction {
 <Middleware use={requireRole('admin')} />
 ```
 
-### Using Middleware
+### Middleware Components
 
-**In `_config.tsx`:**
-```tsx
-import { authMiddleware } from '../../middleware/auth.tsx';
-
-<Middleware use={authMiddleware} />
-```
-
-**Per-route (in route file):**
-```tsx
-import { authMiddleware } from '../../middleware/auth.tsx';
-
-export const middleware = [authMiddleware];
-
-export async function POST({ body, user }: HandlerProps) {
-  // user is available from <Augment> in middleware
-}
-```
+| Component | Description |
+|-----------|-------------|
+| `<Err code={401} message="..." />` | Return error and halt chain |
+| `<Augment user={...} />` | Add data to handler props |
 
 ---
 
@@ -328,32 +353,42 @@ Every handler receives typed props:
 
 ```tsx
 interface HandlerProps<TParams, TBody, TQuery> {
-  params: TParams;       // URL parameters
-  query: TQuery;         // Query string
-  body: TBody;           // Request body
-  headers: Record<string, string>;
-  request: FastifyRequest;
-  reply: FastifyReply;
-  db: unknown;           // From DB provider
-  log: Logger;           // Fastify logger
-  user?: unknown;        // From auth middleware
+  params: TParams;                    // URL parameters
+  query: TQuery;                      // Query string
+  body: TBody;                        // Request body
+  headers: Record<string, string>;    // Request headers
+  request: FastifyRequest;            // Raw Fastify request
+  reply: FastifyReply;                // Raw Fastify reply
+  log: Logger;                        // Fastify logger
+  user?: unknown;                     // From auth middleware
+  db?: unknown;                       // From DB provider
 }
 ```
 
----
-
-## 🔧 Server Props
+### Example with Types
 
 ```tsx
-<Server 
-  port={3000}
-  host="0.0.0.0"
-  cors={{
-    origin: true,
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  }}
->
+interface CreatePostBody {
+  title: string;
+  content: string;
+}
+
+export async function POST({ body, user, log }: HandlerProps<unknown, CreatePostBody>) {
+  log.info('Creating post');
+  
+  if (!body.title) {
+    return <Err code={400} message="Title required" />;
+  }
+  
+  const post = await createPost({ ...body, author: user.id });
+  
+  return (
+    <Response>
+      <Status code={201} />
+      <Body data={{ success: true, data: post }} />
+    </Response>
+  );
+}
 ```
 
 ---
@@ -370,6 +405,22 @@ interface HandlerProps<TParams, TBody, TQuery> {
 
 ---
 
+## 🛡️ Security Utilities
+
+Tagliatelle includes security helpers:
+
+```tsx
+import { 
+  authFailureTracker,   // Rate limit auth failures by IP
+  isSafeString,         // Validate string safety
+  sanitizeErrorMessage, // Clean error messages
+  safeErrorResponse,    // Safe error responses
+  withTimeout,          // Add timeouts to async operations
+} from 'tagliatelle';
+```
+
+---
+
 ## 🚀 Performance
 
 Built on Fastify, you get:
@@ -377,6 +428,21 @@ Built on Fastify, you get:
 - **Low latency** JSON serialization
 - **Schema validation** support
 - **Automatic logging**
+
+---
+
+## 📋 CLI Reference
+
+```bash
+# Create a new project
+npx tagliatelle init my-api
+
+# Create without installing dependencies
+npx tagliatelle init my-api --skip-install
+
+# Show help
+npx tagliatelle --help
+```
 
 ---
 
@@ -388,6 +454,7 @@ Got a new "ingredient"? Open a Pull Request! We're looking for:
 - [ ] OpenAPI schema generation
 - [ ] Static file serving (`<Static />`)
 - [ ] GraphQL integration
+- [ ] Database adapters
 
 ---
 

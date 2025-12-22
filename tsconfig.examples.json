@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "tagliatelle": ["./src/index.ts"],
+      "tagliatelle/jsx-runtime": ["./src/jsx-runtime.ts"],
+      "tagliatelle/jsx-dev-runtime": ["./src/jsx-runtime.ts"]
+    },
+    
+    "jsx": "react-jsx",
+    "jsxImportSource": "tagliatelle"
+  },
+  "include": ["examples/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
+

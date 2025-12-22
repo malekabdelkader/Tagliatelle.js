@@ -2,12 +2,36 @@
   "name": "tagliatelle",
   "version": "1.0.0",
   "description": "🍝 The Declarative Backend Framework - JSX-powered API architecture on Fastify",
-  "main": "dist/index.js",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "tagliatelle": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/jsx-runtime.d.ts",
+      "import": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/jsx-runtime.d.ts",
+      "import": "./dist/jsx-runtime.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
-    "start": "tsx src/main.tsx",
-    "dev": "tsx watch src/main.tsx"
+    "prepublishOnly": "npm run build",
+    "example": "tsx --tsconfig tsconfig.examples.json examples/main.tsx",
+    "example:dev": "tsx --tsconfig tsconfig.examples.json watch examples/main.tsx"
   },
   "keywords": [
     "fastify",
@@ -18,10 +42,23 @@
     "framework",
     "api",
     "rest",
-    "typescript"
+    "typescript",
+    "file-based-routing",
+    "cli"
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/malekabdelkader/Tagliatelle.js.git"
+  },
+  "homepage": "https://github.com/malekabdelkader/Tagliatelle.js#readme",
+  "bugs": {
+    "url": "https://github.com/malekabdelkader/Tagliatelle.js/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "fastify": "^4.24.0",
     "@fastify/cors": "^8.4.0"
@@ -30,5 +67,13 @@
     "typescript": "^5.3.0",
     "tsx": "^4.6.0",
     "@types/node": "^20.10.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
   }
 }

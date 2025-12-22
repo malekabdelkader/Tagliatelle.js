@@ -4,10 +4,8 @@
  * GET /
  */
 
-import { h, Response, Status, Body } from '../tagliatelle.js';
-import type { HandlerProps } from '../types.js';
-
-void h; // JSX factory
+import { Response, Status, Body } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
 
 export async function GET({ log }: HandlerProps) {
   log.info('API info request');
@@ -33,4 +31,3 @@ export async function GET({ log }: HandlerProps) {
     </Response>
   );
 }
-

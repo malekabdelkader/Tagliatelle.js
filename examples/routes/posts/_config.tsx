@@ -5,12 +5,10 @@
  * Uses JSX components for declarative configuration!
  */
 
-import { h, Fragment, Logger, Middleware, RateLimiter } from '../../tagliatelle.js';
-import { authMiddleware } from '../../middleware/auth.js';
-import type { HandlerProps } from '../../types.js';
+import { Logger, Middleware, RateLimiter } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
 import type { FastifyRequest, FastifyReply } from 'fastify';
-
-void h;
+import { authMiddleware } from '../../middleware/auth.js';
 
 // Conditional auth - only for write operations
 const writeAuthMiddleware = async (props: HandlerProps, request: FastifyRequest, reply: FastifyReply) => {
@@ -32,4 +30,3 @@ export default () => (
     <Middleware use={writeAuthMiddleware} />
   </>
 );
-
