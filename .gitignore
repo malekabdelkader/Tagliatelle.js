@@ -15,9 +15,6 @@ dist/
 **/.DS_Store
 Thumbs.db
 
-# Unrelated projects
-rsbuild-plugin-block-imports/
-
 # Logs
 *.log
 npm-debug.log*
