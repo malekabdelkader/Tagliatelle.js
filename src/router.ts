@@ -20,6 +20,7 @@ import type { Handler, MiddlewareFunction, HandlerProps, CorsConfig } from './ty
 import { COMPONENT_TYPES } from './types.js';
 import type { TagliatelleComponent, TagliatelleNode, TagliatelleElement } from './types.js';
 import { safeMerge, sanitizeErrorMessage, withTimeout } from './security.js';
+import { Fragment } from './jsx-runtime.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🎨 CONSOLE COLORS
@@ -139,20 +140,39 @@ function parseJSXConfig(element: TagliatelleNode): ParsedConfig {
       return;
     }
 
-    // Resolve JSX elements
-    let resolved: TagliatelleNode | TagliatelleComponent = node;
-    if (typeof node === 'object' && node !== null && 'type' in node && typeof (node as TagliatelleElement).type === 'function') {
+    // Check if this is a JSX element
+    if (typeof node === 'object' && node !== null && 'type' in node) {
       const el = node as TagliatelleElement;
-      const props = { ...el.props, children: el.children };
-      const componentFn = el.type as (props: Record<string, unknown>) => TagliatelleNode;
-      resolved = componentFn(props);
       
-      // If resolution returned an array (e.g., Fragment), process each item
-      if (Array.isArray(resolved)) {
-        resolved.forEach(processNode);
+      // Handle Fragment (from new JSX runtime) - just process children
+      const elType = el.type as unknown;
+      if (elType === Fragment || (typeof elType === 'symbol' && String(elType).includes('fragment'))) {
+        if (el.children) {
+          el.children.forEach(child => processNode(child as TagliatelleNode));
+        }
+        return;
+      }
+      
+      // Handle function components - call them to get the resolved value
+      if (typeof el.type === 'function') {
+        const props = { ...el.props, children: el.children };
+        const componentFn = el.type as (props: Record<string, unknown>) => TagliatelleNode;
+        const resolved = componentFn(props);
+        
+        // If resolution returned an array, process each item
+        if (Array.isArray(resolved)) {
+          resolved.forEach(processNode);
+          return;
+        }
+        
+        // Process the resolved component
+        processNode(resolved as TagliatelleNode);
         return;
       }
     }
+
+    // Resolve JSX elements (legacy path for classic runtime)
+    let resolved: TagliatelleNode | TagliatelleComponent = node;
 
     // Process TagliatelleComponent
     if (typeof resolved === 'object' && resolved !== null && '__tagliatelle' in resolved) {
