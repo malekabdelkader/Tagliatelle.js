@@ -23,6 +23,20 @@ render(<App />);
 
 ---
 
+## 🤔 The Origin Story
+
+This project started as a **joke**.
+
+I noticed that every frontend framework is racing to become more server-oriented. React added Server Components. Next.js gave us `"use server"`. Remix is basically a backend framework wearing a React costume. The JavaScript ecosystem is slowly but surely... **becoming PHP**.
+
+So I thought: *"If frontend devs want to write server code so badly, why not go all the way?"*
+
+Instead of sneaking server code into your React components, let's do the **opposite** — write your entire backend in pure TSX. Routes? JSX. Middleware? JSX. Responses? You guessed it... JSX.
+
+**Tagliatelle.js: Because if we're going to make everything look like PHP anyway, we might as well make it delicious.** 🍝
+
+---
+
 ## 🚀 Quick Start
 
 ### Create a new project
