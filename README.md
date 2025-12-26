@@ -49,9 +49,8 @@ Instead of sneaking server code into your React components, let's do the **oppos
 ### Create a new project
 
 ```bash
-npx tagliatelle init my-api
+npx tagliatelle@beta init my-api
 cd my-api
-npm install
 npm run dev
 ```
 
@@ -77,7 +76,7 @@ curl http://localhost:3000/posts
 | **JSX Config** | Configure routes with `<Logger>`, `<Middleware>`, `<RateLimiter>` |
 | **Full TypeScript** | End-to-end type safety with `HandlerProps<TParams, TBody, TQuery>` |
 | **Zero Boilerplate** | Handlers return data or JSX — no `res.send()` needed |
-| **CLI Scaffolding** | `npx tagliatelle init` creates a ready-to-run project |
+| **CLI Scaffolding** | `npx tagliatelle@beta init` creates a ready-to-run project |
 
 ---
 
@@ -86,13 +85,13 @@ curl http://localhost:3000/posts
 ### New Project (Recommended)
 
 ```bash
-npx tagliatelle init my-api
+npx tagliatelle@beta init my-api
 ```
 
 ### Add to Existing Project
 
 ```bash
-npm install tagliatelle
+npm install tagliatelle@beta
 ```
 
 Then configure your `tsconfig.json`:
@@ -456,13 +455,13 @@ Built on Fastify, you get:
 
 ```bash
 # Create a new project
-npx tagliatelle init my-api
+npx tagliatelle@beta init my-api
 
 # Create without installing dependencies
-npx tagliatelle init my-api --skip-install
+npx tagliatelle@beta init my-api --skip-install
 
 # Show help
-npx tagliatelle --help
+npx tagliatelle@beta --help
 ```
 
 ---

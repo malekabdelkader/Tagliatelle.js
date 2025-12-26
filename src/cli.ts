@@ -48,7 +48,7 @@ const templates: Record<string, string> = {
     "serve": "node dist/server.js"
   },
   "dependencies": {
-    "tagliatelle": "^1.0.0"
+    "tagliatelle": "^1.0.0-beta.1"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
