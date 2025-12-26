@@ -751,10 +751,180 @@ async function processTree(
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎯 CLI ARGUMENT PARSING
+// ═══════════════════════════════════════════════════════════════════════════
+
+interface CLIOptions {
+  port?: number;
+  host?: string;
+  open?: boolean;
+  help?: boolean;
+}
+
+/**
+ * Parse CLI arguments
+ * Supports: -p/--port, -H/--host, -o/--open, -h/--help
+ */
+function parseCliArgs(): CLIOptions {
+  const args = process.argv.slice(2);
+  const options: CLIOptions = {};
+  
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    // Help: -h, --help
+    if (arg === '-h' || arg === '--help') {
+      options.help = true;
+      continue;
+    }
+    
+    // Open browser: -o, --open
+    if (arg === '-o' || arg === '--open') {
+      options.open = true;
+      continue;
+    }
+    
+    // Port: --port=3001, -p=3001, --port 3001, -p 3001
+    if (arg.startsWith('--port=') || arg.startsWith('-p=')) {
+      const value = parseInt(arg.split('=')[1], 10);
+      if (!isNaN(value) && value > 0 && value <= 65535) {
+        options.port = value;
+      }
+      continue;
+    }
+    if ((arg === '--port' || arg === '-p') && args[i + 1] && !args[i + 1].startsWith('-')) {
+      const value = parseInt(args[i + 1], 10);
+      if (!isNaN(value) && value > 0 && value <= 65535) {
+        options.port = value;
+        i++; // Skip next arg
+      }
+      continue;
+    }
+    
+    // Host: --host=localhost, -H=localhost, --host localhost, -H localhost
+    if (arg.startsWith('--host=') || arg.startsWith('-H=')) {
+      options.host = arg.split('=')[1];
+      continue;
+    }
+    if ((arg === '--host' || arg === '-H') && args[i + 1] && !args[i + 1].startsWith('-')) {
+      options.host = args[i + 1];
+      i++; // Skip next arg
+      continue;
+    }
+  }
+  
+  return options;
+}
+
+/**
+ * Print help message and exit
+ */
+function printHelp(): void {
+  console.log(`
+${c.yellow}  🍝 <Tag>liatelle.js${c.reset} - The Declarative Backend Framework
+
+${c.bold}Usage:${c.reset}
+  npx tsx your-app.tsx [options]
+  npm run dev -- [options]
+
+${c.bold}Options:${c.reset}
+  ${c.cyan}-p, --port <number>${c.reset}    Port to listen on (default: 3000)
+                          Can also use ${c.dim}PORT${c.reset} env variable
+  ${c.cyan}-H, --host <string>${c.reset}    Host to bind to (default: 0.0.0.0)
+                          Can also use ${c.dim}HOST${c.reset} env variable
+  ${c.cyan}-o, --open${c.reset}             Open browser after server starts
+  ${c.cyan}-h, --help${c.reset}             Show this help message
+
+${c.bold}Examples:${c.reset}
+  ${c.dim}# Run on custom port${c.reset}
+  npm run dev -- -p 8080
+
+  ${c.dim}# Bind to localhost only${c.reset}
+  npm run dev -- -H localhost
+
+  ${c.dim}# Using environment variables${c.reset}
+  PORT=8080 HOST=localhost npm run dev
+
+  ${c.dim}# Open browser automatically${c.reset}
+  npm run dev -- --open
+`);
+  process.exit(0);
+}
+
+/**
+ * Open URL in default browser (cross-platform)
+ */
+async function openBrowser(url: string): Promise<void> {
+  const { exec } = await import('node:child_process');
+  const { platform } = await import('node:os');
+  
+  const command = platform() === 'darwin' 
+    ? `open "${url}"` 
+    : platform() === 'win32' 
+      ? `start "${url}"` 
+      : `xdg-open "${url}"`;
+  
+  exec(command, (error) => {
+    if (error) {
+      console.log(`  ${c.dim}Could not open browser automatically${c.reset}`);
+    }
+  });
+}
+
+/**
+ * Get effective port with priority: CLI args > ENV > default
+ */
+function getEffectivePort(cliOptions: CLIOptions, defaultPort: number): number {
+  // Priority 1: CLI arguments
+  if (cliOptions.port !== undefined) {
+    return cliOptions.port;
+  }
+  
+  // Priority 2: Environment variable
+  const envPort = process.env.PORT;
+  if (envPort) {
+    const parsed = parseInt(envPort, 10);
+    if (!isNaN(parsed) && parsed > 0 && parsed <= 65535) {
+      return parsed;
+    }
+  }
+  
+  // Priority 3: Default from code
+  return defaultPort;
+}
+
+/**
+ * Get effective host with priority: CLI args > ENV > default
+ */
+function getEffectiveHost(cliOptions: CLIOptions, defaultHost: string): string {
+  // Priority 1: CLI arguments
+  if (cliOptions.host !== undefined) {
+    return cliOptions.host;
+  }
+  
+  // Priority 2: Environment variable
+  const envHost = process.env.HOST;
+  if (envHost) {
+    return envHost;
+  }
+  
+  // Priority 3: Default from code
+  return defaultHost;
+}
+
 /**
  * The main render function - turns your JSX tree into a running server
  */
 export async function render(element: TagliatelleNode): Promise<FastifyInstance> {
+  // Parse CLI arguments first
+  const cliOptions = parseCliArgs();
+  
+  // Handle --help flag
+  if (cliOptions.help) {
+    printHelp();
+  }
+  
   const resolved = resolveElement(element);
   
   if (!resolved || Array.isArray(resolved) || resolved.__tagliatelle !== COMPONENT_TYPES.SERVER) {
@@ -812,14 +982,26 @@ ${c.yellow}  ╔═════════════════════�
     }
   }
 
-  // Start the server
-  const port = serverComponent.port as number;
-  const host = serverComponent.host as string;
+  // Start the server (with CLI/ENV override support)
+  const defaultPort = serverComponent.port as number;
+  const defaultHost = serverComponent.host as string;
+  const port = getEffectivePort(cliOptions, defaultPort);
+  const host = getEffectiveHost(cliOptions, defaultHost);
 
   try {
     await fastify.listen({ port, host });
-    console.log(`  ${c.green}✓${c.reset} ${c.bold}Server ready${c.reset} ${c.dim}→${c.reset} ${c.cyan}http://${host}:${port}${c.reset}
+    
+    // Build the URL (use localhost for display if bound to 0.0.0.0)
+    const displayHost = host === '0.0.0.0' ? 'localhost' : host;
+    const serverUrl = `http://${displayHost}:${port}`;
+    
+    console.log(`  ${c.green}✓${c.reset} ${c.bold}Server ready${c.reset} ${c.dim}→${c.reset} ${c.cyan}${serverUrl}${c.reset}
 `);
+    
+    // Open browser if --open flag is set
+    if (cliOptions.open) {
+      await openBrowser(serverUrl);
+    }
   } catch (err) {
     console.error(`  ${c.red}✗${c.reset} ${c.bold}Failed to start:${c.reset}`, err);
     process.exit(1);

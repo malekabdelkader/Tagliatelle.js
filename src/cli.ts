@@ -82,8 +82,10 @@ const templates: Record<string, string> = {
  * 🍝 {{PROJECT_NAME}} - Powered by Tagliatelle
  * 
  * Start your server:
- *   npm run dev     - Development with hot reload
- *   npm run start   - Production mode
+ *   npm run dev              # Development with hot reload
+ *   npm run start            # Production mode
+ *   npm run dev -- -p 8080   # Custom port
+ *   npm run dev -- --help    # Show all CLI options
  */
 
 import path from 'node:path';
@@ -463,6 +465,15 @@ npm run dev
 npm run start
 \`\`\`
 
+## CLI Options
+
+| Option | Env Variable | Description |
+|--------|--------------|-------------|
+| \`-p, --port\` | \`PORT\` | Port to listen on (default: 3000) |
+| \`-H, --host\` | \`HOST\` | Host to bind to (default: 0.0.0.0) |
+| \`-o, --open\` | — | Open browser after start |
+| \`-h, --help\` | — | Show all options |
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -582,6 +593,12 @@ ${c.bold}Next steps:${c.reset}
   ${c.cyan}npm run dev${c.reset}
 
 ${c.dim}Your API will be running at ${c.cyan}http://localhost:3000${c.reset}
+
+${c.bold}CLI Options:${c.reset}
+  ${c.dim}npm run dev -- -p 8080${c.reset}        ${c.dim}# Custom port${c.reset}
+  ${c.dim}npm run dev -- -H localhost${c.reset}   ${c.dim}# Bind to localhost${c.reset}
+  ${c.dim}npm run dev -- --open${c.reset}         ${c.dim}# Open browser${c.reset}
+  ${c.dim}npm run dev -- --help${c.reset}         ${c.dim}# All options${c.reset}
 
 ${c.yellow}🍝 Buon appetito!${c.reset}
 `);

@@ -163,6 +163,19 @@ render(<App />);
 | `<RateLimiter max={100} timeWindow="1 minute" />` | Rate limiting |
 | `<Middleware use={fn} />` | Add global middleware |
 
+### Runtime Options
+
+You can override server settings at runtime using CLI flags or environment variables:
+
+| Option | Env Variable | Description |
+|--------|--------------|-------------|
+| `-p, --port <number>` | `PORT` | Port to listen on (default: 3000) |
+| `-H, --host <string>` | `HOST` | Host to bind to (default: 0.0.0.0) |
+| `-o, --open` | — | Open browser after server starts |
+| `-h, --help` | — | Show help message |
+
+**Priority:** CLI flags > Environment variables > Code defaults
+
 ---
 
 ## 📁 File-Based Routing
@@ -457,11 +470,14 @@ Built on Fastify, you get:
 # Create a new project
 npx tagliatelle@beta init my-api
 
-# Create without installing dependencies
-npx tagliatelle@beta init my-api --skip-install
+# Development with hot reload
+npm run dev
 
-# Show help
-npx tagliatelle@beta --help
+# Production mode  
+npm run start
+
+# Show runtime options (port, host, etc.)
+npm run dev -- --help
 ```
 
 ---

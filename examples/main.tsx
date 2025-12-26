@@ -3,6 +3,13 @@
  * 
  * The "Chef's Table" with file-based routing!
  * Routes are automatically loaded from the routes/ directory.
+ * 
+ * Run with CLI options:
+ *   npm run example              # Default port 3000
+ *   npm run example -- -p 8080   # Custom port
+ *   npm run example -- -H localhost -p 3001
+ *   npm run example -- --help    # Show all options
+ *   PORT=8080 npm run example    # Using env variable
  */
 
 import path from 'node:path';
