@@ -88,16 +88,19 @@ const templates: Record<string, string> = {
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { render, Server, Logger, Cors, Routes } from 'tagliatelle';
+import { render, Server, Logger, Cors, Routes, DB } from 'tagliatelle';
+import { dbPlugin } from './plugins/db.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const App = () => (
   <Server port={3000}>
     <Logger level="info" />
-    <Cors origin="*">
-      <Routes dir={path.join(__dirname, 'routes')} />
-    </Cors>
+    <DB provider={dbPlugin}>
+      <Cors origin="*">
+        <Routes dir={path.join(__dirname, 'routes')} />
+      </Cors>
+    </DB>
   </Server>
 );
 
@@ -356,6 +359,88 @@ export async function DELETE({ params, log }: HandlerProps<PostParams>) {
 }
 `,
 
+  'plugins/db.ts': `/**
+ * 🗄️ Database Plugin
+ * 
+ * Example database provider for Tagliatelle.
+ * Replace with your actual database connection (PostgreSQL, MongoDB, etc.)
+ */
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 📦 TYPES
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface Database {
+  query: <T>(sql: string, params?: unknown[]) => Promise<T[]>;
+  insert: <T>(table: string, data: Record<string, unknown>) => Promise<T>;
+  update: (table: string, id: string, data: Record<string, unknown>) => Promise<boolean>;
+  delete: (table: string, id: string) => Promise<boolean>;
+  close: () => Promise<void>;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🍝 DATABASE PROVIDER
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Creates a mock database connection
+ * Replace this with your actual database connection logic
+ * 
+ * Examples:
+ *   - PostgreSQL: pg or postgres
+ *   - MongoDB: mongoose or mongodb
+ *   - SQLite: better-sqlite3
+ *   - Prisma: @prisma/client
+ */
+export async function dbPlugin(): Promise<Database> {
+  // Simulate connection delay
+  await new Promise(resolve => setTimeout(resolve, 50));
+  
+  console.log('🗄️  Database connected');
+  
+  // In-memory storage (replace with real DB)
+  const storage: Record<string, Record<string, unknown>[]> = {};
+  
+  return {
+    async query<T>(sql: string, _params?: unknown[]): Promise<T[]> {
+      console.log(\`🗄️  Query: \${sql}\`);
+      const table = sql.match(/FROM\\s+(\\w+)/i)?.[1] || 'default';
+      return (storage[table] || []) as T[];
+    },
+    
+    async insert<T>(table: string, data: Record<string, unknown>): Promise<T> {
+      console.log(\`🗄️  Insert into \${table}:\`, data);
+      if (!storage[table]) storage[table] = [];
+      const record = { id: String(storage[table].length + 1), ...data };
+      storage[table].push(record);
+      return record as T;
+    },
+    
+    async update(table: string, id: string, data: Record<string, unknown>): Promise<boolean> {
+      console.log(\`🗄️  Update \${table}/\${id}:\`, data);
+      if (!storage[table]) return false;
+      const index = storage[table].findIndex(r => r.id === id);
+      if (index === -1) return false;
+      storage[table][index] = { ...storage[table][index], ...data };
+      return true;
+    },
+    
+    async delete(table: string, id: string): Promise<boolean> {
+      console.log(\`🗄️  Delete \${table}/\${id}\`);
+      if (!storage[table]) return false;
+      const index = storage[table].findIndex(r => r.id === id);
+      if (index === -1) return false;
+      storage[table].splice(index, 1);
+      return true;
+    },
+    
+    async close(): Promise<void> {
+      console.log('🗄️  Database connection closed');
+    }
+  };
+}
+`,
+
   '.gitignore': `node_modules/
 dist/
 .env
@@ -395,6 +480,8 @@ npm run start
 \`\`\`
 {{PROJECT_NAME}}/
 ├── server.tsx          # Entry point
+├── plugins/
+│   └── db.ts           # Database provider
 ├── routes/
 │   ├── index.tsx       # GET /
 │   ├── health.tsx      # GET /health
