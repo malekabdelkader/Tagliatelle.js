@@ -1,0 +1,13 @@
+# Default code owners for all files
+* @malekabdelkader
+
+# Core framework
+/src/ @malekabdelkader
+
+# CLI
+/src/cli.ts @malekabdelkader
+
+# Examples and documentation
+/examples/ @malekabdelkader
+/README.md @malekabdelkader
+
