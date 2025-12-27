@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "fastify": "^4.24.0",
-    "@fastify/cors": "^8.4.0"
+    "@fastify/cors": "^11.2.0"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
