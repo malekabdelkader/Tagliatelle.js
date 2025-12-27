@@ -19,6 +19,7 @@ import {
   Server, 
   Logger,
   Cors,
+  RateLimiter,
   Routes
 } from 'tagliatelle';
 
@@ -32,15 +33,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const App = () => (
   <Server port={3000}>
     {/* 📊 Logging Configuration */}
-    <Logger level="info" />
-    
-    {/* 🌐 CORS for all routes */}
-    <Cors origin="*">
+    <Logger level="info">
       
-      {/* 🍝 File-based routing  */}
-      <Routes dir={path.join(__dirname, 'routes')} />
-      
-    </Cors>
+      {/* 🌐 CORS for all routes */}
+      <Cors origin="*">
+        
+        {/* 🚦 Rate limiting at top level (can be overridden) */}
+        <RateLimiter max={1000} timeWindow="1 minute">
+          
+          {/* 🍝 File-based routing  */}
+          <Routes dir={path.join(__dirname, 'routes')} />
+          
+        </RateLimiter>
+      </Cors>
+    </Logger>
   </Server>
 );
 

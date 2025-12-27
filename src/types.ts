@@ -43,6 +43,8 @@ export const COMPONENT_TYPES = {
   CORS: Symbol('Cors'),
   RATE_LIMITER: Symbol('RateLimiter'),
   ROUTES: Symbol('Routes'),
+  // Router internal components
+  ROUTE_FILE: Symbol('RouteFile'),
   // Middleware components
   AUGMENT: Symbol('Augment'),
   HALT: Symbol('Halt'),
@@ -121,6 +123,50 @@ export interface CorsConfig {
   maxAge?: number;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 🎯 UNIFIED ROUTE CONFIG (shared between main app and file-based routes)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export interface RouteConfig {
+  // Config properties (inherited & overridable)
+  middleware: MiddlewareFunction[];
+  prefix: string;
+  rateLimit?: { max: number; timeWindow: string };
+  cors?: CorsConfig;
+  logLevel?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent';
+  
+  // Services (shared, can be overridden by _config with DB)
+  db?: unknown;
+  
+  // Internal
+  [key: string]: unknown;
+}
+
+/**
+ * Keys that should never be copied (prototype pollution prevention)
+ */
+const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'];
+
+/**
+ * Clone a RouteConfig and override with new values
+ * Includes prototype pollution prevention for defense in depth
+ */
+export function cloneConfig(config: RouteConfig, overrides: Partial<RouteConfig> = {}): RouteConfig {
+  // Filter out dangerous keys from overrides (defense in depth)
+  const safeOverrides: Partial<RouteConfig> = {};
+  for (const key of Object.keys(overrides)) {
+    if (!DANGEROUS_KEYS.includes(key)) {
+      safeOverrides[key] = overrides[key];
+    }
+  }
+  
+  return {
+    ...config,
+    middleware: safeOverrides.middleware ? [...safeOverrides.middleware] : [...config.middleware],
+    ...safeOverrides
+  };
+}
+
 export interface ServerProps {
   port?: number;
   host?: string;
@@ -151,6 +197,7 @@ export interface DBProps {
 
 export interface LoggerProps {
   level?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+  children?: TagliatelleNode;
 }
 
 export interface GroupProps {

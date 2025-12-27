@@ -16,8 +16,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import type { Handler, MiddlewareFunction, HandlerProps, CorsConfig } from './types.js';
-import { COMPONENT_TYPES } from './types.js';
+import type { Handler, MiddlewareFunction, HandlerProps, CorsConfig, RouteConfig } from './types.js';
+import { COMPONENT_TYPES, cloneConfig } from './types.js';
 import type { TagliatelleComponent, TagliatelleNode, TagliatelleElement } from './types.js';
 import { safeMerge, sanitizeErrorMessage, withTimeout } from './security.js';
 import { Fragment } from './jsx-runtime.js';
@@ -88,7 +88,6 @@ export interface RouteInfo {
 export interface RouterOptions {
   routesDir: string;
   prefix?: string;
-  middleware?: MiddlewareFunction[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -120,98 +119,242 @@ function isConfigFile(fileName: string): boolean {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// 🔍 JSX CONFIG PARSER
+// 🔍 JSX TREE PROCESSOR (for file-based routing)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Parse JSX config components into a ParsedConfig object
+ * Process JSX config tree and register routes
+ * Uses a single unified RouteConfig that gets cloned and overridden
  */
-function parseJSXConfig(element: TagliatelleNode): ParsedConfig {
-  const config: ParsedConfig = {
-    middleware: []
-  };
+async function processConfigTree(
+  node: TagliatelleNode,
+  fastify: FastifyInstance,
+  config: RouteConfig,
+  basePrefix: string
+): Promise<void> {
+  if (!node) return;
 
-  function processNode(node: TagliatelleNode): void {
-    if (!node) return;
+  // Handle arrays (fragments)
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      await processConfigTree(child, fastify, config, basePrefix);
+    }
+    return;
+  }
 
-    // Handle arrays (fragments)
-    if (Array.isArray(node)) {
-      node.forEach(processNode);
+  // Check if this is a JSX element
+  if (typeof node === 'object' && node !== null && 'type' in node) {
+    const el = node as TagliatelleElement;
+    
+    // Handle Fragment - just process children
+    const elType = el.type as unknown;
+    if (elType === Fragment || (typeof elType === 'symbol' && String(elType).includes('fragment'))) {
+      if (el.children) {
+        for (const child of el.children) {
+          await processConfigTree(child as TagliatelleNode, fastify, config, basePrefix);
+        }
+      }
       return;
     }
-
-    // Check if this is a JSX element
-    if (typeof node === 'object' && node !== null && 'type' in node) {
-      const el = node as TagliatelleElement;
-      
-      // Handle Fragment (from new JSX runtime) - just process children
-      const elType = el.type as unknown;
-      if (elType === Fragment || (typeof elType === 'symbol' && String(elType).includes('fragment'))) {
-        if (el.children) {
-          el.children.forEach(child => processNode(child as TagliatelleNode));
-        }
-        return;
-      }
-      
-      // Handle function components - call them to get the resolved value
-      if (typeof el.type === 'function') {
-        const props = { ...el.props, children: el.children };
-        const componentFn = el.type as (props: Record<string, unknown>) => TagliatelleNode;
-        const resolved = componentFn(props);
-        
-        // If resolution returned an array, process each item
-        if (Array.isArray(resolved)) {
-          resolved.forEach(processNode);
-          return;
-        }
-        
-        // Process the resolved component
-        processNode(resolved as TagliatelleNode);
-        return;
-      }
-    }
-
-    // Resolve JSX elements (legacy path for classic runtime)
-    let resolved: TagliatelleNode | TagliatelleComponent = node;
-
-    // Process TagliatelleComponent
-    if (typeof resolved === 'object' && resolved !== null && '__tagliatelle' in resolved) {
-      const component = resolved as TagliatelleComponent;
-
-      switch (component.__tagliatelle) {
-        case COMPONENT_TYPES.LOGGER:
-          config.logLevel = component.level as ParsedConfig['logLevel'];
-          break;
-
-        case COMPONENT_TYPES.MIDDLEWARE:
-          if (component.use) {
-            config.middleware.push(component.use as MiddlewareFunction);
-          }
-          break;
-
-        case COMPONENT_TYPES.RATE_LIMITER:
-          config.rateLimit = {
-            max: component.max as number,
-            timeWindow: component.timeWindow as string
-          };
-          break;
-
-        case COMPONENT_TYPES.GROUP:
-          if (component.prefix) {
-            config.prefix = (config.prefix || '') + (component.prefix as string);
-          }
-          break;
-      }
-
-      // Process children
-      if (component.children) {
-        (component.children as TagliatelleNode[]).forEach(processNode);
-      }
+    
+    // Handle function components - call them to get the resolved value
+    if (typeof el.type === 'function') {
+      const props = { ...el.props, children: el.children };
+      const componentFn = el.type as (props: Record<string, unknown>) => TagliatelleNode;
+      const resolved = componentFn(props);
+      await processConfigTree(resolved as TagliatelleNode, fastify, config, basePrefix);
+      return;
     }
   }
 
-  processNode(element);
-  return config;
+  // Process TagliatelleComponent
+  if (typeof node === 'object' && node !== null && '__tagliatelle' in node) {
+    const component = node as TagliatelleComponent;
+
+    switch (component.__tagliatelle) {
+      case COMPONENT_TYPES.LOGGER:
+        // Clone config with new logLevel, process children
+        const loggerConfig = cloneConfig(config, { 
+          logLevel: component.level as RouteConfig['logLevel'] 
+        });
+        if (component.children) {
+          for (const child of component.children as TagliatelleNode[]) {
+            await processConfigTree(child, fastify, loggerConfig, basePrefix);
+          }
+        }
+        break;
+
+      case COMPONENT_TYPES.MIDDLEWARE:
+        // Clone config with added middleware
+        if (component.use) {
+          const middlewareConfig = cloneConfig(config, {
+            middleware: [...config.middleware, component.use as MiddlewareFunction]
+          });
+          if (component.children) {
+            for (const child of component.children as TagliatelleNode[]) {
+              await processConfigTree(child, fastify, middlewareConfig, basePrefix);
+            }
+          }
+        }
+        break;
+
+      case COMPONENT_TYPES.RATE_LIMITER:
+        // Clone config with new rateLimit
+        const rateLimitConfig = cloneConfig(config, {
+          rateLimit: {
+            max: component.max as number,
+            timeWindow: component.timeWindow as string
+          }
+        });
+        if (component.children) {
+          for (const child of component.children as TagliatelleNode[]) {
+            await processConfigTree(child, fastify, rateLimitConfig, basePrefix);
+          }
+        }
+        break;
+
+      case COMPONENT_TYPES.GROUP:
+        // Clone config with concatenated prefix
+        const groupConfig = cloneConfig(config, {
+          prefix: config.prefix + (component.prefix as string || '')
+        });
+        if (component.children) {
+          for (const child of component.children as TagliatelleNode[]) {
+            await processConfigTree(child, fastify, groupConfig, basePrefix);
+          }
+        }
+        break;
+
+      case COMPONENT_TYPES.CORS:
+        // Clone config with new cors
+        const corsConfig = cloneConfig(config, {
+          cors: {
+            origin: component.origin as CorsConfig['origin'],
+            methods: component.methods as CorsConfig['methods']
+          }
+        });
+        if (component.children) {
+          for (const child of component.children as TagliatelleNode[]) {
+            await processConfigTree(child, fastify, corsConfig, basePrefix);
+          }
+        }
+        break;
+
+      case COMPONENT_TYPES.DB:
+        // Clone config with new db provider
+        let dbConfig = config;
+        if (component.provider) {
+          try {
+            const provider = component.provider as () => Promise<unknown>;
+            const db = await provider();
+            dbConfig = cloneConfig(config, { db });
+            console.log(`  ${c.green}✓${c.reset} DB connected (config override)`);
+          } catch (error) {
+            console.error(`  ${c.red}✗${c.reset} DB initialization failed in config`);
+          }
+        }
+        if (component.children) {
+          for (const child of component.children as TagliatelleNode[]) {
+            await processConfigTree(child, fastify, dbConfig, basePrefix);
+          }
+        }
+        break;
+
+      // Handle route file marker - register the actual route
+      case COMPONENT_TYPES.ROUTE_FILE:
+        await registerRouteFromModule(
+          component.module as RouteModule,
+          component.filePath as string,
+          component.urlPath as string,
+          fastify,
+          config,
+          basePrefix
+        );
+        break;
+
+      default:
+        // Unknown component, just process children
+        if (component.children) {
+          for (const child of component.children as TagliatelleNode[]) {
+            await processConfigTree(child, fastify, config, basePrefix);
+          }
+        }
+    }
+  }
+}
+
+/**
+ * Register a route module with the unified config
+ */
+async function registerRouteFromModule(
+  module: RouteModule,
+  filePath: string,
+  urlPath: string,
+  fastify: FastifyInstance,
+  config: RouteConfig,
+  basePrefix: string
+): Promise<RouteInfo | null> {
+  const httpMethods: HTTPMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
+  const methods: HTTPMethod[] = [];
+  
+  // Build final URL path
+  const finalUrlPath = basePrefix + config.prefix + urlPath;
+  
+  // Collect all middleware
+  const allMiddleware = [...config.middleware];
+  
+  // Add route-level middleware
+  if (module.middleware) {
+    const routeMw = Array.isArray(module.middleware) ? module.middleware : [module.middleware];
+    allMiddleware.push(...routeMw);
+  }
+  
+  for (const method of httpMethods) {
+    if (typeof module[method] === 'function') {
+      methods.push(method);
+      
+      fastify.route({
+        method,
+        url: finalUrlPath,
+        handler: wrapRouteHandler(
+          module[method]!,
+          allMiddleware,
+          config
+        )
+      });
+      
+      console.log(`  ${c.dim}├${c.reset} ${methodColor(method)}${method.padEnd(6)}${c.reset} ${c.white}${finalUrlPath}${c.reset}`);
+    }
+  }
+  
+  if (methods.length > 0) {
+    return {
+      filePath,
+      urlPath: finalUrlPath,
+      methods,
+      config: {
+        middleware: allMiddleware,
+        prefix: config.prefix,
+        logLevel: config.logLevel,
+        rateLimit: config.rateLimit,
+        cors: config.cors
+      }
+    };
+  }
+  
+  return null;
+}
+
+/**
+ * Create a RouteFile marker component for use in config tree
+ */
+function RouteFile(module: RouteModule, filePath: string, urlPath: string): TagliatelleComponent {
+  return {
+    __tagliatelle: COMPONENT_TYPES.ROUTE_FILE,
+    module,
+    filePath,
+    urlPath
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -226,10 +369,23 @@ interface ScanResult {
 async function scanDirectory(dir: string, routesDir: string): Promise<ScanResult> {
   const result: ScanResult = { routes: [], configs: new Map() };
   
+  // Security: Ensure we're still within the routes directory
+  const resolvedDir = path.resolve(dir);
+  const resolvedRoutesDir = path.resolve(routesDir);
+  if (!resolvedDir.startsWith(resolvedRoutesDir)) {
+    console.warn(`  ${c.yellow}⚠${c.reset} Path escape attempt blocked: ${resolvedDir}`);
+    return result;
+  }
+  
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     
     for (const entry of entries) {
+      // Security: Skip symlinks to prevent escape via symlink
+      if (entry.isSymbolicLink()) {
+        continue;
+      }
+      
       const fullPath = path.join(dir, entry.name);
       
       if (entry.isDirectory()) {
@@ -255,57 +411,6 @@ async function scanDirectory(dir: string, routesDir: string): Promise<ScanResult
 async function loadModule<T>(filePath: string): Promise<T> {
   const fileUrl = pathToFileURL(filePath).href;
   return await import(fileUrl) as T;
-}
-
-function getConfigChain(routeDir: string, routesDir: string, configs: Map<string, string>): string[] {
-  const chain: string[] = [];
-  let current = routeDir;
-  
-  while (current.startsWith(routesDir) || current === routesDir) {
-    const configPath = configs.get(current);
-    if (configPath) {
-      chain.unshift(configPath);
-    }
-    const parent = path.dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  
-  return chain;
-}
-
-function mergeConfigs(configs: ParsedConfig[], baseMiddleware: MiddlewareFunction[]): ParsedConfig {
-  const resolved: ParsedConfig = {
-    middleware: [...baseMiddleware],
-    prefix: ''
-  };
-  
-  for (const config of configs) {
-    // Middleware is additive
-    resolved.middleware.push(...config.middleware);
-    
-    // Rate limit overrides
-    if (config.rateLimit) {
-      resolved.rateLimit = config.rateLimit;
-    }
-    
-    // Log level overrides
-    if (config.logLevel) {
-      resolved.logLevel = config.logLevel;
-    }
-    
-    // Prefix is additive
-    if (config.prefix) {
-      resolved.prefix = (resolved.prefix || '') + config.prefix;
-    }
-    
-    // CORS overrides
-    if (config.cors !== undefined) {
-      resolved.cors = config.cors;
-    }
-  }
-  
-  return resolved;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -380,12 +485,11 @@ interface PrettyLog {
 function wrapRouteHandler(
   handler: Handler,
   middlewares: MiddlewareFunction[],
-  context: { get: <T>(key: string) => T | undefined },
-  _logLevel?: string
+  config: RouteConfig
 ) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    // Use our pretty logger instead of Fastify's JSON logger
-    const prettyLog = context.get<PrettyLog>('prettyLog') || {
+    // Use pretty logger from config or default
+    const prettyLog = (config.prettyLog as PrettyLog) || {
       info: () => {},
       warn: () => {},
       error: () => {},
@@ -399,7 +503,7 @@ function wrapRouteHandler(
       headers: request.headers as Record<string, string | string[] | undefined>,
       request,
       reply,
-      db: context.get('db'),
+      db: config.db,
       log: prettyLog as unknown as FastifyRequest['log'],
     };
 
@@ -541,99 +645,133 @@ function isJSXResponse(value: unknown): boolean {
 // 🚀 ROUTER
 // ═══════════════════════════════════════════════════════════════════════════
 
-export async function registerRoutes(
-  fastify: FastifyInstance,
-  options: RouterOptions,
-  context: { get: <T>(key: string) => T | undefined; set: <T>(key: string, value: T) => void }
-): Promise<RouteInfo[]> {
-  const { routesDir, prefix = '', middleware = [] } = options;
-  const routes: RouteInfo[] = [];
+// Type for config functions that wrap children
+type ConfigFunction = (props: { children: TagliatelleNode[] }) => TagliatelleNode;
+
+interface DirectoryTree {
+  routes: Array<{ filePath: string; urlPath: string; module: RouteModule }>;
+  subdirs: Map<string, DirectoryTree>;
+  config?: ConfigFunction;
+}
+
+/**
+ * Build a tree of directories with their routes and configs
+ */
+async function buildDirectoryTree(
+  dir: string,
+  routesDir: string,
+  routeFiles: string[],
+  configs: Map<string, string>
+): Promise<DirectoryTree> {
+  const tree: DirectoryTree = {
+    routes: [],
+    subdirs: new Map()
+  };
   
-  console.log(`  ${c.dim}Routes:${c.reset} ${c.cyan}${path.basename(routesDir)}/${c.reset}`);
-  
-  // Scan for routes and configs
-  const { routes: routeFiles, configs } = await scanDirectory(routesDir, routesDir);
-  
-  // Load and parse all config files
-  const loadedConfigs = new Map<string, ParsedConfig>();
-  for (const [dir, configPath] of configs) {
+  // Load config for this directory if exists
+  const configPath = configs.get(dir);
+  if (configPath) {
     try {
-      const configModule = await loadModule<{ default: () => TagliatelleNode }>(configPath);
-      const jsxTree = configModule.default();
-      const parsedConfig = parseJSXConfig(jsxTree);
-      loadedConfigs.set(dir, parsedConfig);
-      
-      // Config loaded silently
+      const configModule = await loadModule<{ default: ConfigFunction }>(configPath);
+      tree.config = configModule.default;
     } catch (error) {
       console.error(`  ${c.red}✗${c.reset} Config error: ${path.relative(routesDir, configPath)}`);
     }
   }
   
-  // Process each route
+  // Group routes by their immediate directory
   for (const filePath of routeFiles) {
-    try {
-      const module = await loadModule<RouteModule>(filePath);
-      const routeDir = path.dirname(filePath);
-      
-      // Get config chain and merge
-      const configChain = getConfigChain(routeDir, routesDir, configs);
-      const chainedConfigs: ParsedConfig[] = [];
-      
-      for (const configPath of configChain) {
-        // Find the config for this path
-        for (const [dir, cfg] of loadedConfigs) {
-          if (configs.get(dir) === configPath) {
-            chainedConfigs.push(cfg);
-            break;
-          }
-        }
+    const fileDir = path.dirname(filePath);
+    
+    if (fileDir === dir) {
+      // Route is directly in this directory
+      try {
+        const module = await loadModule<RouteModule>(filePath);
+        const urlPath = filePathToUrlPath(filePath, routesDir);
+        tree.routes.push({ filePath, urlPath, module });
+      } catch (error) {
+        console.error(`  ${c.red}✗${c.reset} Route error: ${path.relative(routesDir, filePath)}`);
       }
+    } else if (fileDir.startsWith(dir + path.sep)) {
+      // Route is in a subdirectory - find immediate child dir
+      const relativePath = path.relative(dir, fileDir);
+      const immediateSubdir = relativePath.split(path.sep)[0];
+      const subdirPath = path.join(dir, immediateSubdir);
       
-      const resolvedConfig = mergeConfigs(chainedConfigs, middleware);
-      
-      // Add route-level middleware
-      if (module.middleware) {
-        const routeMw = Array.isArray(module.middleware) ? module.middleware : [module.middleware];
-        resolvedConfig.middleware.push(...routeMw);
+      if (!tree.subdirs.has(subdirPath)) {
+        // Recursively build subtree
+        const subRoutes = routeFiles.filter(f => path.dirname(f).startsWith(subdirPath));
+        const subtree = await buildDirectoryTree(subdirPath, routesDir, subRoutes, configs);
+        tree.subdirs.set(subdirPath, subtree);
       }
-      
-      // Calculate URL path
-      const urlPath = prefix + (resolvedConfig.prefix || '') + filePathToUrlPath(filePath, routesDir);
-      
-      // Register each HTTP method
-      const httpMethods: HTTPMethod[] = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'];
-      const methods: HTTPMethod[] = [];
-      
-      for (const method of httpMethods) {
-        if (typeof module[method] === 'function') {
-          methods.push(method);
-          
-          fastify.route({
-            method,
-            url: urlPath,
-            handler: wrapRouteHandler(
-              module[method]!,
-              resolvedConfig.middleware,
-              context,
-              resolvedConfig.logLevel
-            )
-          });
-          
-          console.log(`  ${c.dim}├${c.reset} ${methodColor(method)}${method.padEnd(6)}${c.reset} ${c.white}${urlPath}${c.reset}`);
-        }
-      }
-      
-      if (methods.length > 0) {
-        routes.push({
-          filePath,
-          urlPath,
-          methods,
-          config: resolvedConfig
-        });
-      }
-    } catch (error) {
-      console.error(`  ${c.red}✗${c.reset} Route error: ${path.relative(routesDir, filePath)}`);
     }
+  }
+  
+  return tree;
+}
+
+/**
+ * Convert a directory tree to JSX nodes, applying configs as wrappers
+ */
+function treeToJSX(tree: DirectoryTree): TagliatelleNode[] {
+  // Create RouteFile markers for all routes in this directory
+  const routeNodes: TagliatelleNode[] = tree.routes.map(r => 
+    RouteFile(r.module, r.filePath, r.urlPath)
+  );
+  
+  // Add subdirectory trees
+  for (const [, subtree] of tree.subdirs) {
+    routeNodes.push(...treeToJSX(subtree));
+  }
+  
+  // If this directory has a config, wrap the children
+  if (tree.config && routeNodes.length > 0) {
+    return [tree.config({ children: routeNodes })];
+  }
+  
+  return routeNodes;
+}
+
+export async function registerRoutes(
+  fastify: FastifyInstance,
+  options: RouterOptions,
+  initialConfig: RouteConfig
+): Promise<RouteInfo[]> {
+  const { routesDir, prefix = '' } = options;
+  const routes: RouteInfo[] = [];
+  
+  // Security: Validate routes directory
+  const resolvedRoutesDir = path.resolve(routesDir);
+  
+  // Ensure directory exists and is accessible
+  try {
+    const stat = await fs.stat(resolvedRoutesDir);
+    if (!stat.isDirectory()) {
+      throw new Error(`Routes path is not a directory: ${resolvedRoutesDir}`);
+    }
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === 'ENOENT') {
+      console.error(`  ${c.red}✗${c.reset} Routes directory not found: ${resolvedRoutesDir}`);
+      return routes;
+    }
+    throw error;
+  }
+  
+  console.log(`  ${c.dim}Routes:${c.reset} ${c.cyan}${path.basename(resolvedRoutesDir)}/${c.reset}`);
+  
+  // Scan for routes and configs
+  const { routes: routeFiles, configs } = await scanDirectory(resolvedRoutesDir, resolvedRoutesDir);
+  
+  // Build the directory tree with routes and configs
+  const tree = await buildDirectoryTree(resolvedRoutesDir, resolvedRoutesDir, routeFiles, configs);
+  
+  // Convert tree to JSX with configs wrapping their children
+  const jsxTree = treeToJSX(tree);
+  
+  // Process the JSX tree - configs will clone and override the initial config
+  for (const node of jsxTree) {
+    await processConfigTree(node, fastify, initialConfig, prefix);
   }
   
   return routes;
@@ -641,8 +779,8 @@ export async function registerRoutes(
 
 export function createRouter(options: RouterOptions) {
   return {
-    register: async (fastify: FastifyInstance, context: { get: <T>(key: string) => T | undefined; set: <T>(key: string, value: T) => void }) => {
-      return registerRoutes(fastify, options, context);
+    register: async (fastify: FastifyInstance, config: RouteConfig) => {
+      return registerRoutes(fastify, options, config);
     }
   };
 }

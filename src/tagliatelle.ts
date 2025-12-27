@@ -78,6 +78,8 @@ import {
   BodyProps,
   HeadersProps,
   ErrProps,
+  RouteConfig,
+  cloneConfig,
 } from './types.js';
 import { registerRoutes } from './router.js';
 
@@ -224,10 +226,11 @@ export function DB({ provider, children }: DBProps): TagliatelleComponent {
   };
 }
 
-export function Logger({ level }: LoggerProps): TagliatelleComponent {
+export function Logger({ level, children }: LoggerProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.LOGGER,
-    level: level ?? 'info'
+    level: level ?? 'info',
+    children: children ? [children].flat() : []
   };
 }
 
@@ -515,16 +518,16 @@ function resolveElement(element: TagliatelleNode): TagliatelleComponent | Taglia
 function wrapHandler(
   handler: Handler,
   middlewares: MiddlewareFunction[],
-  context: Context
+  config: RouteConfig
 ) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
-    // Use our pretty logger
-    const prettyLog = context.get<{
+    // Use pretty logger from config
+    const prettyLog = (config.prettyLog as {
       info: (msg: string) => void;
       warn: (msg: string) => void;
       error: (msg: string) => void;
       debug: (msg: string) => void;
-    }>('prettyLog') || {
+    }) || {
       info: () => {},
       warn: () => {},
       error: () => {},
@@ -539,7 +542,7 @@ function wrapHandler(
       headers: request.headers as Record<string, string | string[] | undefined>,
       request,
       reply,
-      db: context.get('db'),
+      db: config.db,
       log: prettyLog as unknown as FastifyRequest['log'],
     };
 
@@ -612,13 +615,12 @@ function wrapHandler(
 
 /**
  * Processes the virtual DOM tree and configures Fastify
+ * Uses unified RouteConfig that gets cloned and overridden
  */
 async function processTree(
   element: TagliatelleNode,
   fastify: FastifyInstance,
-  context: Context,
-  middlewares: MiddlewareFunction[] = [],
-  prefix: string = ''
+  config: RouteConfig
 ): Promise<void> {
   const resolved = resolveElement(element);
   if (!resolved) return;
@@ -626,7 +628,7 @@ async function processTree(
   // Handle arrays (fragments)
   if (Array.isArray(resolved)) {
     for (const child of resolved) {
-      await processTree(child, fastify, context, middlewares, prefix);
+      await processTree(child, fastify, config);
     }
     return;
   }
@@ -636,17 +638,26 @@ async function processTree(
 
   switch (type) {
     case COMPONENT_TYPES.LOGGER:
-      // Fastify has built-in logging, just configure it
+      // Clone config with new logLevel
       fastify.log.level = component.level as string;
+      const loggerConfig = cloneConfig(config, { 
+        logLevel: component.level as RouteConfig['logLevel'] 
+      });
+      if (component.children) {
+        for (const child of component.children as TagliatelleNode[]) {
+          await processTree(child, fastify, loggerConfig);
+        }
+      }
       break;
 
     case COMPONENT_TYPES.DB:
-      // Initialize database provider
+      // Clone config with new db
+      let dbConfig = config;
       if (component.provider) {
         try {
           const provider = component.provider as () => Promise<unknown>;
           const db = await provider();
-          context.set('db', db);
+          dbConfig = cloneConfig(config, { db });
           console.log(`  ${c.green}✓${c.reset} Database connected`);
         } catch (error) {
           const err = error as Error;
@@ -654,16 +665,15 @@ async function processTree(
           throw error;
         }
       }
-      // Process children with db context
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
-          await processTree(child, fastify, context, middlewares, prefix);
+          await processTree(child, fastify, dbConfig);
         }
       }
       break;
 
     case COMPONENT_TYPES.CORS:
-      // Configure CORS
+      // Configure CORS at Fastify level
       try {
         const cors = await import('@fastify/cors');
         await fastify.register(cors.default, {
@@ -674,43 +684,67 @@ async function processTree(
       } catch {
         console.warn(`  ${c.yellow}⚠${c.reset} CORS skipped (install @fastify/cors)`);
       }
-      // Process children
+      // Clone config with new cors for children
+      const corsConfig = cloneConfig(config, { 
+        cors: { 
+          origin: component.origin as string | string[] | boolean, 
+          methods: component.methods as string[] 
+        } 
+      });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
-          await processTree(child, fastify, context, middlewares, prefix);
+          await processTree(child, fastify, corsConfig);
+        }
+      }
+      break;
+
+    case COMPONENT_TYPES.RATE_LIMITER:
+      // Clone config with new rateLimit
+      const rateLimitConfig = cloneConfig(config, { 
+        rateLimit: { 
+          max: component.max as number, 
+          timeWindow: component.timeWindow as string 
+        } 
+      });
+      if (component.children) {
+        for (const child of component.children as TagliatelleNode[]) {
+          await processTree(child, fastify, rateLimitConfig);
         }
       }
       break;
 
     case COMPONENT_TYPES.MIDDLEWARE:
-      // Add middleware to chain for child routes
-      const newMiddlewares = [...middlewares, component.use as MiddlewareFunction];
+      // Clone config with added middleware
+      const middlewareConfig = cloneConfig(config, { 
+        middleware: [...config.middleware, component.use as MiddlewareFunction] 
+      });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
-          await processTree(child, fastify, context, newMiddlewares, prefix);
+          await processTree(child, fastify, middlewareConfig);
         }
       }
       break;
 
     case COMPONENT_TYPES.GROUP:
-      // Add prefix to child routes
-      const newPrefix = prefix + (component.prefix as string ?? '');
+      // Clone config with concatenated prefix
+      const groupConfig = cloneConfig(config, { 
+        prefix: config.prefix + (component.prefix as string ?? '') 
+      });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
-          await processTree(child, fastify, context, middlewares, newPrefix);
+          await processTree(child, fastify, groupConfig);
         }
       }
       break;
 
     case COMPONENT_TYPES.ROUTES:
-      // File-based routing
+      // File-based routing - pass the unified config
       const routesDir = component.dir as string;
-      const routesPrefix = prefix + (component.prefix as string ?? '');
+      const routesPrefix = config.prefix + (component.prefix as string ?? '');
       await registerRoutes(fastify, {
         routesDir,
-        prefix: routesPrefix,
-        middleware: middlewares
-      }, context);
+        prefix: routesPrefix
+      }, config);
       break;
 
     case COMPONENT_TYPES.GET:
@@ -719,9 +753,9 @@ async function processTree(
     case COMPONENT_TYPES.DELETE:
     case COMPONENT_TYPES.PATCH:
       // Register route with Fastify
-      const fullPath = prefix + (component.path as string);
+      const fullPath = config.prefix + (component.path as string);
       const method = component.method as HTTPMethods;
-      const routeHandler = wrapHandler(component.handler as Handler, middlewares, context);
+      const routeHandler = wrapHandler(component.handler as Handler, config.middleware, config);
       
       if (component.schema) {
         fastify.route({
@@ -745,7 +779,7 @@ async function processTree(
       // Unknown component, try to process children
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
-          await processTree(child, fastify, context, middlewares, prefix);
+          await processTree(child, fastify, config);
         }
       }
   }
@@ -945,9 +979,6 @@ ${c.yellow}  ╔═════════════════════�
     disableRequestLogging: true // We do our own request logging
   });
   
-  // Create context for dependency injection
-  const context = new Context();
-  
   // Create our own pretty logger for handlers to use
   const prettyLog = {
     info: (msg: string) => console.log(`  ${c.dim}ℹ${c.reset} ${msg}`),
@@ -956,8 +987,12 @@ ${c.yellow}  ╔═════════════════════�
     debug: (msg: string) => console.log(`  ${c.dim}◦${c.reset} ${c.dim}${msg}${c.reset}`),
   };
   
-  // Make prettyLog available via context
-  context.set('prettyLog', prettyLog);
+  // Create the initial unified RouteConfig
+  const initialConfig: RouteConfig = {
+    middleware: [],
+    prefix: '',
+    prettyLog
+  };
 
   // Custom request logging hook
   fastify.addHook('onResponse', (request, reply, done) => {
@@ -975,10 +1010,10 @@ ${c.yellow}  ╔═════════════════════�
     done();
   });
 
-  // Process the tree
+  // Process the tree with unified config
   if (serverComponent.children) {
     for (const child of serverComponent.children as TagliatelleNode[]) {
-      await processTree(child, fastify, context, [], '');
+      await processTree(child, fastify, initialConfig);
     }
   }
 

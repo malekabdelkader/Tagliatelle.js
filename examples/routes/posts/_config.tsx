@@ -1,12 +1,12 @@
 /**
  * 🍝 Posts Routes Config
  * 
- * This config applies to all routes in /posts/*
- * Uses JSX components for declarative configuration!
+ * This config applies to all routes in /posts/* passed as children.
+ * Config wraps children - components apply their effects to child routes!
  */
 
 import { Logger, Middleware, RateLimiter } from 'tagliatelle';
-import type { HandlerProps } from 'tagliatelle';
+import type { HandlerProps, TagliatelleNode } from 'tagliatelle';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import { authMiddleware } from '../../middleware/auth.js';
 
@@ -23,10 +23,12 @@ const writeAuthMiddleware = async (props: HandlerProps, request: FastifyRequest,
   return authMiddleware(props, request, reply);
 };
 
-export default () => (
-  <>
-    <Logger level="debug" />
-    <RateLimiter max={100} timeWindow="1 minute" />
-    <Middleware use={writeAuthMiddleware} />
-  </>
+export default ({ children }: { children: TagliatelleNode[] }) => (
+  <Logger level="debug">
+    <RateLimiter max={100} timeWindow="1 minute">
+      <Middleware use={writeAuthMiddleware}>
+        {children}
+      </Middleware>
+    </RateLimiter>
+  </Logger>
 );
