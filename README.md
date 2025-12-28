@@ -8,7 +8,7 @@
 
 📚 **[Live Documentation](https://malekabdelkader.github.io/Tagliatelle.js/)** | 📦 **[NPM Package](https://www.npmjs.com/package/tagliatelle)**
 
-> ⚠️ **Status:** This is an experimental project. Most features are **not tested** or **partially tested**. Use at your own risk in production. Contributions and bug reports are welcome!
+> ⚠️ **Status:** This is a (satirical point of view) project. Most features are **not tested** or **partially tested**.
 
 `<Tag>liatelle.js` is a **TypeScript** backend framework built on top of **Fastify** that treats your API architecture like a component tree. Using JSX/TSX, you define your routes, middleware, and responses as a visual hierarchy.
 
