@@ -72,6 +72,7 @@ import {
   CorsProps,
   RateLimiterProps,
   RoutesProps,
+  PluginHandler,
   HandlerProps,
   ResponseProps,
   StatusProps,
@@ -269,6 +270,63 @@ export function Routes({ dir, prefix }: RoutesProps): TagliatelleComponent {
     __tagliatelle: COMPONENT_TYPES.ROUTES,
     dir,
     prefix: prefix ?? ''
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔌 PLUGIN SYSTEM (Custom Tags)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Create a custom plugin component (Custom Tag)
+ * 
+ * This allows you to create reusable JSX components that hook into Fastify.
+ * Perfect for integrating Swagger, GraphQL, WebSockets, Metrics, etc.
+ * 
+ * @example
+ * ```tsx
+ * // Create a custom Swagger plugin
+ * import { createPlugin } from 'tagliatelle';
+ * import swagger from '@fastify/swagger';
+ * import swaggerUi from '@fastify/swagger-ui';
+ * 
+ * interface SwaggerProps {
+ *   title: string;
+ *   version: string;
+ *   path?: string;
+ * }
+ * 
+ * export const Swagger = createPlugin<SwaggerProps>(
+ *   'Swagger',
+ *   async (fastify, props) => {
+ *     await fastify.register(swagger, {
+ *       openapi: { info: { title: props.title, version: props.version } }
+ *     });
+ *     await fastify.register(swaggerUi, {
+ *       routePrefix: props.path ?? '/docs'
+ *     });
+ *   }
+ * );
+ * 
+ * // Use it!
+ * <Server>
+ *   <Swagger title="My API" version="1.0.0" />
+ *   <Routes dir="./routes" />
+ * </Server>
+ * ```
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function createPlugin<TProps extends Record<string, any> = Record<string, any>>(
+  name: string,
+  handler: PluginHandler<TProps>
+): (props: TProps) => TagliatelleComponent {
+  return (props: TProps): TagliatelleComponent => {
+    return {
+      __tagliatelle: COMPONENT_TYPES.PLUGIN,
+      __handler: handler,
+      __name: name,
+      ...props
+    };
   };
 }
 
@@ -745,6 +803,35 @@ async function processTree(
         routesDir,
         prefix: routesPrefix
       }, config);
+      break;
+
+    case COMPONENT_TYPES.PLUGIN:
+      // Custom plugin (user-defined tag)
+      const pluginHandler = component.__handler as PluginHandler;
+      const pluginName = component.__name as string;
+      
+      // Extract user props (exclude internal props)
+      const pluginProps: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(component)) {
+        if (!key.startsWith('__') && key !== 'children') {
+          pluginProps[key] = value;
+        }
+      }
+      
+      try {
+        await pluginHandler(fastify, pluginProps, config);
+        console.log(`  ${c.green}✓${c.reset} ${pluginName} ${c.dim}loaded${c.reset}`);
+      } catch (err) {
+        const error = err as Error;
+        console.error(`  ${c.red}✗${c.reset} ${pluginName} failed: ${error.message}`);
+      }
+      
+      // Process children if any
+      if (component.children) {
+        for (const child of component.children as TagliatelleNode[]) {
+          await processTree(child, fastify, config);
+        }
+      }
       break;
 
     case COMPONENT_TYPES.GET:

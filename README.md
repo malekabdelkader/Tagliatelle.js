@@ -12,9 +12,11 @@
 
 ```tsx
 import { render, Server, Logger, Cors, Routes } from 'tagliatelle';
+import { Swagger } from './plugins/swagger.js';
 
 const App = () => (
   <Server port={3000}>
+    <Swagger title="My API" version="1.0.0" />
     <Logger level="info" />
     <Cors origin="*">
       <Routes dir="./routes" />
@@ -78,6 +80,8 @@ curl http://localhost:3000/posts
 | **JSX Responses** | Return `<Response><Status code={201} /><Body data={...} /></Response>` |
 | **JSX Middleware** | Use `<Err>` and `<Augment>` for clean auth flows |
 | **JSX Config** | Configure routes with `<Logger>`, `<Middleware>`, `<RateLimiter>` |
+| **Plugin System** | Create custom tags with `createPlugin` — add Swagger, GraphQL, WebSockets, anything! |
+| **OpenAPI Schemas** | Export `GET_SCHEMA`, `POST_SCHEMA` for auto-generated docs |
 | **Full TypeScript** | End-to-end type safety with `HandlerProps<TParams, TBody, TQuery>` |
 | **Zero Boilerplate** | Handlers return data or JSX — no `res.send()` needed |
 | **CLI Scaffolding** | `npx tagliatelle@beta init` creates a ready-to-run project |
@@ -125,6 +129,8 @@ my-api/
 │       ├── _data.ts        # Shared data (not a route)
 │       ├── index.tsx       # GET/POST /posts
 │       └── [id].tsx        # GET/PUT/DELETE /posts/:id
+├── plugins/                # Custom plugins
+│   └── swagger.tsx         # Swagger integration
 ├── middleware/
 │   └── auth.tsx            # JSX middleware
 ├── tsconfig.json
@@ -141,11 +147,15 @@ my-api/
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { render, Server, Logger, Cors, Routes } from 'tagliatelle';
+import { Swagger } from './plugins/swagger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const App = () => (
   <Server port={3000}>
+    {/* Custom plugins! */}
+    <Swagger title="My API" version="1.0.0" path="/docs" />
+    
     <Logger level="info" />
     <Cors origin="*">
       <Routes dir={path.join(__dirname, 'routes')} />
@@ -179,6 +189,153 @@ You can override server settings at runtime using CLI flags or environment varia
 | `-h, --help` | — | Show help message |
 
 **Priority:** CLI flags > Environment variables > Code defaults
+
+---
+
+## 🔌 Plugin System (Custom Tags)
+
+Create your own JSX components that hook into Fastify! Perfect for integrating third-party libraries.
+
+### Creating a Plugin
+
+```tsx
+// plugins/swagger.tsx
+import { createPlugin } from 'tagliatelle';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
+
+interface SwaggerProps {
+  title?: string;
+  version?: string;
+  path?: string;
+}
+
+export const Swagger = createPlugin<SwaggerProps>(
+  'Swagger',  // Plugin name (for logging)
+  async (fastify, props, config) => {
+    // You have full access to Fastify!
+    await fastify.register(swagger, {
+      openapi: {
+        info: {
+          title: props.title ?? 'API',
+          version: props.version ?? '1.0.0'
+        }
+      }
+    });
+    
+    await fastify.register(swaggerUi, {
+      routePrefix: props.path ?? '/docs'
+    });
+  }
+);
+```
+
+### Using Your Plugin
+
+```tsx
+import { Swagger } from './plugins/swagger.js';
+
+const App = () => (
+  <Server port={3000}>
+    <Swagger title="My API" version="1.0.0" path="/docs" />
+    <Routes dir="./routes" />
+  </Server>
+);
+```
+
+### Plugin Examples
+
+Here are plugins you can create:
+
+#### GraphQL
+
+```tsx
+import { createPlugin } from 'tagliatelle';
+
+export const GraphQL = createPlugin<{ schema: GraphQLSchema }>(
+  'GraphQL',
+  async (fastify, props) => {
+    const mercurius = await import('mercurius');
+    await fastify.register(mercurius.default, {
+      schema: props.schema,
+      graphiql: true
+    });
+  }
+);
+
+// Usage: <GraphQL schema={mySchema} />
+```
+
+#### WebSocket
+
+```tsx
+import { createPlugin } from 'tagliatelle';
+
+export const WebSocket = createPlugin<{ path?: string }>(
+  'WebSocket',
+  async (fastify, props) => {
+    const ws = await import('@fastify/websocket');
+    await fastify.register(ws.default);
+    
+    fastify.get(props.path ?? '/ws', { websocket: true }, (socket) => {
+      socket.on('message', (msg) => socket.send(`Echo: ${msg}`));
+    });
+  }
+);
+
+// Usage: <WebSocket path="/ws" />
+```
+
+#### Prometheus Metrics
+
+```tsx
+import { createPlugin } from 'tagliatelle';
+
+export const Metrics = createPlugin<{ path?: string }>(
+  'Metrics',
+  async (fastify, props) => {
+    const metrics = await import('fastify-metrics');
+    await fastify.register(metrics.default, {
+      endpoint: props.path ?? '/metrics'
+    });
+  }
+);
+
+// Usage: <Metrics path="/metrics" />
+```
+
+#### Redis Cache
+
+```tsx
+import { createPlugin } from 'tagliatelle';
+
+export const Redis = createPlugin<{ url: string }>(
+  'Redis',
+  async (fastify, props) => {
+    const redis = await import('@fastify/redis');
+    await fastify.register(redis.default, { url: props.url });
+  }
+);
+
+// Usage: <Redis url="redis://localhost:6379" />
+```
+
+### Plugin API
+
+```tsx
+createPlugin<TProps>(
+  name: string,
+  handler: (fastify, props, config) => Promise<void>
+)
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | `string` | Plugin name for logging |
+| `handler` | `PluginHandler` | Async function that receives Fastify instance |
+| `fastify` | `FastifyInstance` | Full access to register plugins, add routes, etc. |
+| `props` | `TProps` | Props passed to the JSX component |
+| `config` | `RouteConfig` | Current route configuration (middleware, prefix, etc.) |
 
 ---
 
@@ -231,6 +388,100 @@ export async function DELETE({ params }: HandlerProps<PostParams>) {
   );
 }
 ```
+
+---
+
+## 📚 OpenAPI Schema Support
+
+Export schemas alongside your handlers for automatic OpenAPI documentation:
+
+```tsx
+// routes/posts/index.tsx
+import { Response, Status, Body, Err } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
+
+// ✨ Export schemas for OpenAPI/Swagger
+export const GET_SCHEMA = {
+  summary: 'List all posts',
+  description: 'Returns a paginated list of blog posts',
+  tags: ['posts'],
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        count: { type: 'number' },
+        data: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              title: { type: 'string' },
+              content: { type: 'string' }
+            }
+          }
+        }
+      }
+    }
+  }
+};
+
+export const POST_SCHEMA = {
+  summary: 'Create a new post',
+  tags: ['posts'],
+  body: {
+    type: 'object',
+    required: ['title', 'content'],
+    properties: {
+      title: { type: 'string', description: 'Post title' },
+      content: { type: 'string', description: 'Post content' }
+    }
+  },
+  response: {
+    201: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean' },
+        data: { type: 'object' }
+      }
+    }
+  }
+};
+
+// Your handlers
+export async function GET({ log }: HandlerProps) {
+  const posts = await db.posts.findAll();
+  return (
+    <Response>
+      <Status code={200} />
+      <Body data={{ success: true, count: posts.length, data: posts }} />
+    </Response>
+  );
+}
+
+export async function POST({ body }: HandlerProps<unknown, CreatePostBody>) {
+  const post = await db.posts.create(body);
+  return (
+    <Response>
+      <Status code={201} />
+      <Body data={{ success: true, data: post }} />
+    </Response>
+  );
+}
+```
+
+### Schema Naming Convention
+
+| Export Name | HTTP Method |
+|-------------|-------------|
+| `GET_SCHEMA` | GET |
+| `POST_SCHEMA` | POST |
+| `PUT_SCHEMA` | PUT |
+| `DELETE_SCHEMA` | DELETE |
+| `PATCH_SCHEMA` | PATCH |
+
+These schemas are automatically picked up by Swagger and other OpenAPI tools!
 
 ---
 
@@ -486,15 +737,58 @@ npm run dev -- --help
 
 ---
 
+## 🔗 Full Example
+
+Here's a complete example with plugins, schemas, and middleware:
+
+```tsx
+// server.tsx
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { render, Server, Logger, Cors, RateLimiter, Routes } from 'tagliatelle';
+import { Swagger } from './plugins/swagger.js';
+import { Metrics } from './plugins/metrics.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const App = () => (
+  <Server port={3000}>
+    {/* Plugins */}
+    <Swagger 
+      title="My API" 
+      version="1.0.0"
+      description="A delicious API"
+      tags={[
+        { name: 'posts', description: 'Blog post operations' },
+        { name: 'users', description: 'User management' }
+      ]}
+    />
+    <Metrics path="/metrics" />
+    
+    {/* Configuration */}
+    <Logger level="info" />
+    <Cors origin="*">
+      <RateLimiter max={1000} timeWindow="1 minute">
+        <Routes dir={path.join(__dirname, 'routes')} />
+      </RateLimiter>
+    </Cors>
+  </Server>
+);
+
+render(<App />);
+```
+
+---
+
 ## 🤝 Contributing
 
-Got a new "ingredient"? Open a Pull Request! We're looking for:
+Got a new "ingredient"? Open a Pull Request! With the plugin system, you can now contribute:
 
-- [ ] WebSocket support (`<WebSocket />`)
-- [ ] OpenAPI schema generation
-- [ ] Static file serving (`<Static />`)
-- [ ] GraphQL integration
-- [ ] Database adapters
+- [ ] Official plugin packages (`@tagliatelle/swagger`, `@tagliatelle/graphql`, etc.)
+- [ ] More example plugins
+- [ ] Documentation improvements
+- [ ] Type improvements
+- [ ] Performance optimizations
 
 ---
 

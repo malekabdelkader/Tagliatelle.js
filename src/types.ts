@@ -2,7 +2,7 @@
  * 🍝 <Tag>liatelle.js - Type Definitions
  */
 
-import type { FastifyRequest, FastifyReply, FastifySchema } from 'fastify';
+import type { FastifyRequest, FastifyReply, FastifySchema, FastifyInstance } from 'fastify';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🍝 CORE TYPES
@@ -43,6 +43,7 @@ export const COMPONENT_TYPES = {
   CORS: Symbol('Cors'),
   RATE_LIMITER: Symbol('RateLimiter'),
   ROUTES: Symbol('Routes'),
+  PLUGIN: Symbol('Plugin'),
   // Router internal components
   ROUTE_FILE: Symbol('RouteFile'),
   // Middleware components
@@ -220,6 +221,33 @@ export interface RateLimiterProps {
 export interface RoutesProps {
   dir: string;
   prefix?: string;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔌 PLUGIN SYSTEM (Custom Tags)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Plugin handler function - receives Fastify instance and props
+ * Use this to create custom tags like <Swagger>, <GraphQL>, <Metrics>, etc.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PluginHandler<TProps = any> = (
+  fastify: FastifyInstance,
+  props: TProps,
+  config: RouteConfig
+) => void | Promise<void>;
+
+/**
+ * Plugin component props - includes the handler and user props
+ */
+export interface PluginProps {
+  /** The plugin handler function */
+  __handler: PluginHandler;
+  /** Plugin name for logging */
+  __name: string;
+  /** User-provided props */
+  [key: string]: unknown;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -28,6 +28,9 @@ export {
   RateLimiter,
   Routes,
   
+  // Plugin System (Custom Tags)
+  createPlugin,
+  
   // Response Components
   Response,
   Status,
@@ -61,6 +64,8 @@ export type {
   CorsProps,
   RateLimiterProps,
   RoutesProps,
+  PluginHandler,
+  PluginProps,
   ResponseProps,
   StatusProps,
   BodyProps,
@@ -71,7 +76,7 @@ export type {
 } from './types.js';
 
 // Router exports
-export type { ParsedConfig, RouteModule, HTTPMethod } from './router.js';
+export type { ParsedConfig, RouteModule, RouteSchema, HTTPMethod } from './router.js';
 
 // Security exports
 export {

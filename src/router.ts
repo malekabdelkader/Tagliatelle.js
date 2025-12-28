@@ -67,6 +67,20 @@ export interface ParsedConfig {
   prefix?: string;
 }
 
+export interface RouteSchema {
+  body?: Record<string, unknown>;
+  querystring?: Record<string, unknown>;
+  params?: Record<string, unknown>;
+  headers?: Record<string, unknown>;
+  response?: Record<number | string, Record<string, unknown>>;
+  description?: string;
+  summary?: string;
+  tags?: string[];
+  deprecated?: boolean;
+  hide?: boolean;
+  security?: Array<Record<string, string[]>>;
+}
+
 export interface RouteModule {
   GET?: Handler;
   POST?: Handler;
@@ -76,6 +90,20 @@ export interface RouteModule {
   HEAD?: Handler;
   OPTIONS?: Handler;
   middleware?: MiddlewareFunction | MiddlewareFunction[];
+  /** OpenAPI schema for GET handler */
+  GET_SCHEMA?: RouteSchema;
+  /** OpenAPI schema for POST handler */
+  POST_SCHEMA?: RouteSchema;
+  /** OpenAPI schema for PUT handler */
+  PUT_SCHEMA?: RouteSchema;
+  /** OpenAPI schema for DELETE handler */
+  DELETE_SCHEMA?: RouteSchema;
+  /** OpenAPI schema for PATCH handler */
+  PATCH_SCHEMA?: RouteSchema;
+  /** OpenAPI schema for HEAD handler */
+  HEAD_SCHEMA?: RouteSchema;
+  /** OpenAPI schema for OPTIONS handler */
+  OPTIONS_SCHEMA?: RouteSchema;
 }
 
 export interface RouteInfo {
@@ -313,7 +341,17 @@ async function registerRouteFromModule(
     if (typeof module[method] === 'function') {
       methods.push(method);
       
-      fastify.route({
+      // Get schema for this method (e.g., GET_SCHEMA, POST_SCHEMA)
+      const schemaKey = `${method}_SCHEMA` as keyof RouteModule;
+      const schema = module[schemaKey] as RouteSchema | undefined;
+      
+      // Build route options
+      const routeOptions: {
+        method: HTTPMethod;
+        url: string;
+        handler: ReturnType<typeof wrapRouteHandler>;
+        schema?: RouteSchema;
+      } = {
         method,
         url: finalUrlPath,
         handler: wrapRouteHandler(
@@ -321,7 +359,14 @@ async function registerRouteFromModule(
           allMiddleware,
           config
         )
-      });
+      };
+      
+      // Add schema if provided (for OpenAPI/Swagger)
+      if (schema) {
+        routeOptions.schema = schema;
+      }
+      
+      fastify.route(routeOptions);
       
       console.log(`  ${c.dim}├${c.reset} ${methodColor(method)}${method.padEnd(6)}${c.reset} ${c.white}${finalUrlPath}${c.reset}`);
     }

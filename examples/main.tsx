@@ -23,6 +23,10 @@ import {
   Routes
 } from 'tagliatelle';
 
+// Custom plugins - this is how you extend Tagliatelle!
+import { Swagger } from './plugins/swagger.js';
+import { WS } from './plugins/websocket.js';
+
 // Get the directory of this file
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -32,6 +36,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const App = () => (
   <Server port={3000}>
+    {/* 📚 Swagger/OpenAPI Documentation - visit /docs */}
+    <Swagger 
+      title="Tagliatelle Example API"
+      version="1.0.0"
+      description="🍝 A delicious API served with Tagliatelle.js"
+      tags={[
+        { name: 'posts', description: 'Blog post operations' },
+        { name: 'health', description: 'Health check endpoints' }
+      ]}
+    />
+    
+    {/* 🔌 WebSocket - connect to ws://localhost:3000/ws */}
+    <WS path="/ws" />
+    
     {/* 📊 Logging Configuration */}
     <Logger level="info">
       

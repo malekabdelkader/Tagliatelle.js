@@ -48,7 +48,7 @@ const templates: Record<string, string> = {
     "serve": "node dist/server.js"
   },
   "dependencies": {
-    "tagliatelle": "^1.0.0-beta.1"
+    "tagliatelle": "^1.0.0-beta.6"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
@@ -162,15 +162,18 @@ export async function GET({ log }: HandlerProps) {
  * 🍝 Posts Routes Config
  * 
  * This config applies to all routes in /posts/*
+ * Config wraps children - components apply their effects to child routes!
  */
 
 import { Logger, RateLimiter } from 'tagliatelle';
+import type { TagliatelleNode } from 'tagliatelle';
 
-export default () => (
-  <>
-    <Logger level="debug" />
-    <RateLimiter max={100} timeWindow="1 minute" />
-  </>
+export default ({ children }: { children: TagliatelleNode[] }) => (
+  <Logger level="debug">
+    <RateLimiter max={100} timeWindow="1 minute">
+      {children}
+    </RateLimiter>
+  </Logger>
 );
 `,
 

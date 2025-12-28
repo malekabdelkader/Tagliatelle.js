@@ -20,7 +20,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "tagliatelle"
   },
-  "include": ["examples/**/*"],
+  "include": ["examples/**/*", "examples/types/**/*"],
   "exclude": ["node_modules", "dist"]
 }
 
