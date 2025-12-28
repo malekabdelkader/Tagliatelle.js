@@ -329,7 +329,7 @@ const docsHTML = `
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <a href="/" class="sidebar-logo">
+      <a href="./index.html" class="sidebar-logo">
         <span>🍝</span> Docs
       </a>
       
@@ -380,13 +380,13 @@ const docsHTML = `
       </nav>
       
       <nav class="nav-section">
-        <a href="/" class="nav-link">← Back to Home</a>
+        <a href="./index.html" class="nav-link">← Back to Home</a>
       </nav>
     </aside>
     
     <main class="main">
       <div class="breadcrumb">
-        <a href="/">Home</a>
+        <a href="./index.html">Home</a>
         <span>/</span>
         <span>Documentation</span>
       </div>
