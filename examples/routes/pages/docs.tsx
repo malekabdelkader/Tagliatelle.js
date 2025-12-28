@@ -1,0 +1,1517 @@
+/**
+ * 📚 DOCUMENTATION PAGE
+ * 
+ * GET /docs - Interactive documentation showcasing Tagliatelle.js patterns
+ * 
+ * Demonstrates:
+ * - Serving rich HTML documentation
+ * - Code examples with syntax highlighting
+ */
+
+import { Response, Status, Body, Headers } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
+
+const docsHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Documentation - Tagliatelle.js</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0c0c14;
+      --bg-card: #13131f;
+      --bg-code: #0a0a12;
+      --bg-sidebar: #0f0f18;
+      --accent-pasta: #ffa726;
+      --accent-tomato: #ef5350;
+      --accent-basil: #66bb6a;
+      --accent-blue: #42a5f5;
+      --accent-purple: #ab47bc;
+      --text-primary: #f5f5f7;
+      --text-secondary: #a0a0b0;
+      --text-muted: #6a6a7a;
+      --border-color: #252535;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      line-height: 1.7;
+    }
+    
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-color);
+      padding: 30px 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    
+    .sidebar-logo span { font-size: 1.8rem; }
+    
+    .nav-section {
+      margin-bottom: 32px;
+    }
+    
+    .nav-section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      padding-left: 12px;
+    }
+    
+    .nav-link {
+      display: block;
+      padding: 10px 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      margin-bottom: 4px;
+    }
+    
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+    }
+    
+    .nav-link.active {
+      background: rgba(255, 167, 38, 0.1);
+      color: var(--accent-pasta);
+    }
+    
+    /* Main Content */
+    .main {
+      padding: 50px 60px;
+      max-width: 900px;
+    }
+    
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+    
+    .breadcrumb a {
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    
+    .breadcrumb a:hover {
+      color: var(--accent-pasta);
+    }
+    
+    h1 {
+      font-size: 2.8rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    
+    .intro {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      margin-bottom: 50px;
+      border-left: 3px solid var(--accent-pasta);
+      padding-left: 20px;
+    }
+    
+    h2 {
+      font-size: 1.8rem;
+      margin: 60px 0 24px;
+      padding-top: 30px;
+      border-top: 1px solid var(--border-color);
+    }
+    
+    h3 {
+      font-size: 1.3rem;
+      margin: 40px 0 16px;
+      color: var(--accent-blue);
+    }
+    
+    p {
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+    
+    ul, ol {
+      color: var(--text-secondary);
+      padding-left: 24px;
+      margin-bottom: 20px;
+    }
+    
+    li {
+      margin-bottom: 8px;
+    }
+    
+    code {
+      font-family: 'Fira Code', monospace;
+      background: var(--bg-code);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: var(--accent-pasta);
+    }
+    
+    /* Code Blocks */
+    .code-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      margin: 24px 0;
+      overflow: hidden;
+    }
+    
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .code-filename {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    
+    .code-lang {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+    
+    .code-body {
+      padding: 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    
+    /* Syntax Colors */
+    .kw { color: #c792ea; }
+    .fn { color: #82aaff; }
+    .str { color: #c3e88d; }
+    .num { color: #f78c6c; }
+    .cmt { color: #6a6a7a; }
+    .comp { color: #ffcb6b; }
+    .prop { color: #80cbc4; }
+    .tag { color: #89ddff; }
+    
+    /* Feature Boxes */
+    .feature-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+    
+    .feature-box h4 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .feature-box p {
+      margin-bottom: 0;
+    }
+    
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+    }
+    
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    th {
+      background: var(--bg-card);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+    }
+    
+    td {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+    
+    td code {
+      color: var(--accent-blue);
+    }
+    
+    /* Response Example */
+    .response-example {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    
+    .response-header {
+      padding: 12px 18px;
+      background: rgba(102, 187, 106, 0.1);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .response-status {
+      font-weight: 600;
+      color: var(--accent-basil);
+    }
+    
+    .response-body {
+      padding: 18px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      white-space: pre;
+      color: var(--text-secondary);
+    }
+    
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .main { padding: 30px 20px; }
+      h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="/" class="sidebar-logo">
+        <span>🍝</span> Docs
+      </a>
+      
+      <nav class="nav-section">
+        <div class="nav-section-title">Getting Started</div>
+        <a href="#overview" class="nav-link active">Overview</a>
+        <a href="#architecture" class="nav-link">Component Tree</a>
+      </nav>
+      
+      <nav class="nav-section">
+        <div class="nav-section-title">Server Components</div>
+        <a href="#server" class="nav-link">&lt;Server&gt;</a>
+        <a href="#routes" class="nav-link">&lt;Routes&gt;</a>
+        <a href="#cors" class="nav-link">&lt;Cors&gt;</a>
+        <a href="#logger" class="nav-link">&lt;Logger&gt;</a>
+        <a href="#ratelimiter" class="nav-link">&lt;RateLimiter&gt;</a>
+        <a href="#db" class="nav-link">&lt;DB&gt;</a>
+        <a href="#middleware-comp" class="nav-link">&lt;Middleware&gt;</a>
+        <a href="#group" class="nav-link">&lt;Group&gt;</a>
+      </nav>
+      
+      <nav class="nav-section">
+        <div class="nav-section-title">Response Components</div>
+        <a href="#response" class="nav-link">&lt;Response&gt;</a>
+        <a href="#status" class="nav-link">&lt;Status&gt;</a>
+        <a href="#headers" class="nav-link">&lt;Headers&gt;</a>
+        <a href="#body" class="nav-link">&lt;Body&gt;</a>
+      </nav>
+      
+      <nav class="nav-section">
+        <div class="nav-section-title">Advanced Patterns</div>
+        <a href="#props-flow" class="nav-link">Props Chaining</a>
+        <a href="#tree-handling" class="nav-link">Tree Nesting</a>
+        <a href="#config" class="nav-link">Config Files</a>
+        <a href="#handlers" class="nav-link">Route Handlers</a>
+        <a href="#auth" class="nav-link">Authentication</a>
+        <a href="#custom" class="nav-link">Custom Components</a>
+        <a href="#plugins" class="nav-link" style="color: var(--accent-basil);">🔌 createPlugin</a>
+      </nav>
+      
+      <nav class="nav-section">
+        <div class="nav-section-title">Plugins</div>
+        <a href="#plugins" class="nav-link">&lt;Swagger&gt;</a>
+        <a href="#plugins" class="nav-link">&lt;WS&gt;</a>
+        <a href="#plugins" class="nav-link">&lt;GraphQL&gt;</a>
+        <a href="#plugins" class="nav-link">&lt;Metrics&gt;</a>
+        <a href="#plugins" class="nav-link">&lt;Redis&gt;</a>
+      </nav>
+      
+      <nav class="nav-section">
+        <a href="/" class="nav-link">← Back to Home</a>
+      </nav>
+    </aside>
+    
+    <main class="main">
+      <div class="breadcrumb">
+        <a href="/">Home</a>
+        <span>/</span>
+        <span>Documentation</span>
+      </div>
+      
+      <h1>📚 Tagliatelle.js Documentation</h1>
+      <p class="intro">
+        Complete reference for building backend APIs with JSX. 
+        All components, patterns, and advanced techniques.
+      </p>
+      
+      <h2 id="overview">Overview</h2>
+      <p>
+        Tagliatelle.js uses JSX to define server configuration, middleware composition, 
+        and route responses. Component nesting creates a tree that defines request flow.
+      </p>
+      
+      <div class="feature-box">
+        <h4>🎯 Core Principles</h4>
+        <ul>
+          <li><strong>Declarative</strong> - Define what, not how. Components describe behavior.</li>
+          <li><strong>Composable</strong> - Nest components to build complex middleware stacks.</li>
+          <li><strong>Props Flow Down</strong> - Parent components pass data to children.</li>
+          <li><strong>Middleware Augments</strong> - Middleware can add props for handlers.</li>
+      </ul>
+      </div>
+      
+      <h2 id="architecture">Component Tree Architecture</h2>
+      <p>
+        Every Tagliatelle app is a tree. The root is <code>&lt;Server&gt;</code>, branches are 
+        middleware, and leaves are <code>&lt;Routes&gt;</code>. Requests flow down through the tree.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Tree Structure Visualization</span>
+          <span class="code-lang">txt</span>
+      </div>
+        <div class="code-body">&lt;Server&gt;                    ← Root: binds to port
+  └─ &lt;Cors&gt;                  ← Branch: adds CORS headers
+       └─ &lt;Logger&gt;           ← Branch: logs requests
+            └─ &lt;RateLimiter&gt; ← Branch: limits requests
+                 └─ &lt;DB&gt;     ← Branch: provides database
+                      └─ &lt;Middleware&gt;  ← Branch: custom logic
+                           └─ &lt;Routes&gt; ← Leaf: handles requests</div>
+      </div>
+      
+      <p>
+        <strong>Key concept:</strong> Each component wraps its children. A request passes 
+        through each layer in order. Responses bubble back up.
+      </p>
+      
+      <h2 id="server">&lt;Server&gt;</h2>
+      <p>
+        The root component. Creates an HTTP server and binds to a port. 
+        Must wrap all other components.
+      </p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        <tr><td><code>port</code></td><td>number</td><td>3000</td><td>Port to listen on</td></tr>
+        <tr><td><code>host</code></td><td>string</td><td>"localhost"</td><td>Host to bind to</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Basic Server</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="comp">Server</span> <span class="prop">port</span>={<span class="num">3000</span>} <span class="prop">host</span>=<span class="str">"0.0.0.0"</span><span class="tag">&gt;</span>
+  {<span class="cmt">/* All other components go here */</span>}
+<span class="tag">&lt;/</span><span class="comp">Server</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h2 id="routes">&lt;Routes&gt;</h2>
+      <p>
+        Loads route handlers from a directory. File paths become URL paths.
+        Use brackets <code>[param]</code> for dynamic segments.
+      </p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>dir</code></td><td>string</td><td>Path to routes directory (required)</td></tr>
+        <tr><td><code>prefix</code></td><td>string</td><td>URL prefix for all routes in dir</td></tr>
+      </table>
+      
+      <h3>File-Based Routing</h3>
+      <p>
+        Routes are files in a directory. The file path becomes the URL path. 
+        Use brackets for dynamic parameters.
+      </p>
+      
+      <table>
+        <tr>
+          <th>File Path</th>
+          <th>URL</th>
+          <th>Example</th>
+        </tr>
+        <tr>
+          <td><code>routes/index.tsx</code></td>
+          <td><code>/</code></td>
+          <td>Homepage</td>
+        </tr>
+        <tr>
+          <td><code>routes/posts/index.tsx</code></td>
+          <td><code>/posts</code></td>
+          <td>List posts</td>
+        </tr>
+        <tr>
+          <td><code>routes/posts/[id].tsx</code></td>
+          <td><code>/posts/:id</code></td>
+          <td>Single post</td>
+        </tr>
+        <tr>
+          <td><code>routes/users/[id]/posts.tsx</code></td>
+          <td><code>/users/:id/posts</code></td>
+          <td>User's posts</td>
+        </tr>
+      </table>
+      
+      <h2 id="cors">&lt;Cors&gt;</h2>
+      <p>
+        Adds Cross-Origin Resource Sharing headers. Wraps children with CORS middleware.
+      </p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>origin</code></td><td>string | boolean | string[]</td><td>Allowed origins. <code>true</code> = all</td></tr>
+        <tr><td><code>methods</code></td><td>string[]</td><td>Allowed HTTP methods</td></tr>
+        <tr><td><code>credentials</code></td><td>boolean</td><td>Allow credentials</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">CORS Configuration</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="comp">Cors</span> 
+  <span class="prop">origin</span>={[<span class="str">"https://app.com"</span>, <span class="str">"https://admin.com"</span>]}
+  <span class="prop">methods</span>={[<span class="str">"GET"</span>, <span class="str">"POST"</span>, <span class="str">"PUT"</span>, <span class="str">"DELETE"</span>]}
+  <span class="prop">credentials</span>={<span class="num">true</span>}
+<span class="tag">&gt;</span>
+  {children}
+<span class="tag">&lt;/</span><span class="comp">Cors</span><span class="tag">&gt;</span></div>
+          </div>
+      
+      <h2 id="logger">&lt;Logger&gt;</h2>
+      <p>
+        Structured logging for requests. Injects <code>log</code> into handler props.
+      </p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>level</code></td><td>"debug" | "info" | "warn" | "error"</td><td>Minimum log level</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Using Logger in Handlers</span>
+          <span class="code-lang">tsx</span>
+          </div>
+        <div class="code-body"><span class="cmt">// In handler, log is available via props:</span>
+<span class="kw">export async function</span> <span class="fn">GET</span>({ log }) {
+  log.info(<span class="str">'Request received'</span>);
+  log.debug({ userId: <span class="num">123</span> }, <span class="str">'Debug data'</span>);
+  log.warn(<span class="str">'Something unusual'</span>);
+  log.error(<span class="str">'Something failed'</span>);
+}</div>
+          </div>
+      
+      <h2 id="ratelimiter">&lt;RateLimiter&gt;</h2>
+      <p>
+        Limits requests per time window. Returns 429 when exceeded.
+      </p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>max</code></td><td>number</td><td>Maximum requests per window</td></tr>
+        <tr><td><code>timeWindow</code></td><td>string</td><td>Window duration (e.g., "1 minute")</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Rate Limiting</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="comp">RateLimiter</span> <span class="prop">max</span>={<span class="num">100</span>} <span class="prop">timeWindow</span>=<span class="str">"1 minute"</span><span class="tag">&gt;</span>
+  <span class="cmt">{/* Max 100 requests per minute per IP */}</span>
+  {children}
+<span class="tag">&lt;/</span><span class="comp">RateLimiter</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h2 id="db">&lt;DB&gt;</h2>
+      <p>
+        Provides database access. Injects <code>db</code> into handler props.
+        Multiple <code>&lt;DB&gt;</code> components can provide different databases to different routes.
+      </p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>provider</code></td><td>() => Database</td><td>Factory function that creates database instance</td></tr>
+        <tr><td><code>name</code></td><td>string</td><td>Optional name for multiple DBs (access via props.dbs.name)</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Database Provider</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="cmt">// Database factory</span>
+<span class="kw">export function</span> <span class="fn">createDB</span>() {
+  <span class="kw">return</span> {
+    users: { findById: (id) => {...}, create: (data) => {...} },
+    posts: { findAll: () => [...], findById: (id) => {...} }
+  };
+}
+
+<span class="cmt">// In server.tsx</span>
+<span class="tag">&lt;</span><span class="comp">DB</span> <span class="prop">provider</span>={createDB}<span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes"</span> <span class="tag">/&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">DB</span><span class="tag">&gt;</span>
+
+<span class="cmt">// In handler</span>
+<span class="kw">export async function</span> <span class="fn">GET</span>({ db }) {
+  <span class="kw">const</span> posts = db.posts.findAll();
+}</div>
+          </div>
+      
+      <h2 id="middleware-comp">&lt;Middleware&gt;</h2>
+      <p>
+        Wraps children with custom middleware function. Most flexible component.
+        Middleware can: augment props, halt requests, or pass through.
+      </p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>use</code></td><td>MiddlewareFunction</td><td>Middleware function to apply</td></tr>
+      </table>
+      
+      <div class="feature-box">
+        <h4>⚡ Middleware Return Values</h4>
+        <ul>
+          <li><strong>Return object</strong> → Props are merged with existing props for children</li>
+          <li><strong>Return JSX Response</strong> → Request is halted, response is sent</li>
+          <li><strong>Return undefined</strong> → Pass through to children unchanged</li>
+        </ul>
+          </div>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Custom Middleware</span>
+          <span class="code-lang">tsx</span>
+          </div>
+        <div class="code-body"><span class="cmt">// Augmenting props</span>
+<span class="kw">const</span> <span class="fn">timingMiddleware</span> = (props, request) => {
+  <span class="kw">return</span> { startTime: Date.now() }; <span class="cmt">// Added to props</span>
+};
+
+<span class="cmt">// Halting request</span>
+<span class="kw">const</span> <span class="fn">authMiddleware</span> = (props, request) => {
+  <span class="kw">if</span> (!request.headers.authorization) {
+    <span class="kw">return</span> (
+      <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">401</span>} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ error: <span class="str">'Unauthorized'</span> }} <span class="tag">/&gt;</span>
+      <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+    );
+  }
+  <span class="kw">return</span> { user: validateToken(request.headers.authorization) };
+};
+
+<span class="cmt">// Using in tree</span>
+<span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={timingMiddleware}<span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={authMiddleware}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span></div>
+        </div>
+      
+      <h2 id="group">&lt;Group&gt;</h2>
+      <p>
+        Groups multiple sibling components without adding behavior. 
+        Useful for applying middleware to multiple Routes.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Grouping Routes</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={authMiddleware}<span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Group</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/posts"</span> <span class="prop">prefix</span>=<span class="str">"/posts"</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/comments"</span> <span class="prop">prefix</span>=<span class="str">"/comments"</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/likes"</span> <span class="prop">prefix</span>=<span class="str">"/likes"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Group</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h2 id="response">&lt;Response&gt;</h2>
+      <p>
+        Container for HTTP response. Wraps Status, Headers, and Body components.
+        Return from route handlers.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Response Structure</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">return</span> (
+  <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">200</span>} <span class="tag">/&gt;</span>         <span class="cmt">{/* Required: HTTP status */}</span>
+    <span class="tag">&lt;</span><span class="fn">Headers</span> <span class="prop">headers</span>={{...}} <span class="tag">/&gt;</span>  <span class="cmt">{/* Optional: custom headers */}</span>
+    <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{...}} <span class="tag">/&gt;</span>       <span class="cmt">{/* Required: response body */}</span>
+  <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+);</div>
+          </div>
+      
+      <h2 id="status">&lt;Status&gt;</h2>
+      <p>Sets HTTP status code for the response.</p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>code</code></td><td>number</td><td>HTTP status code (200, 201, 400, 404, 500, etc.)</td></tr>
+      </table>
+      
+      <h2 id="headers">&lt;Headers&gt;</h2>
+      <p>Sets custom HTTP headers on the response.</p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>headers</code></td><td>Record&lt;string, string&gt;</td><td>Key-value pairs of header names and values</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Common Headers</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="fn">Headers</span> <span class="prop">headers</span>={{
+  <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>,
+  <span class="str">'Cache-Control'</span>: <span class="str">'max-age=3600'</span>,
+  <span class="str">'X-Request-Id'</span>: requestId,
+  <span class="str">'Location'</span>: <span class="str">\`/posts/\${newPost.id}\`</span>
+}} <span class="tag">/&gt;</span></div>
+      </div>
+      
+      <h2 id="body">&lt;Body&gt;</h2>
+      <p>Sets the response body. Can be JSON, HTML string, or raw data.</p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>data</code></td><td>any</td><td>Response body (objects auto-serialized to JSON)</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Body Types</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="cmt">// JSON response (default)</span>
+<span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ success: <span class="num">true</span>, data: posts }} <span class="tag">/&gt;</span>
+
+<span class="cmt">// HTML response</span>
+<span class="tag">&lt;</span><span class="fn">Headers</span> <span class="prop">headers</span>={{ <span class="str">'Content-Type'</span>: <span class="str">'text/html'</span> }} <span class="tag">/&gt;</span>
+<span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={<span class="str">'&lt;h1&gt;Hello World&lt;/h1&gt;'</span>} <span class="tag">/&gt;</span>
+
+<span class="cmt">// Array response</span>
+<span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={[post1, post2, post3]} <span class="tag">/&gt;</span></div>
+          </div>
+      
+      <h2 id="props-flow">Props Chaining</h2>
+      <p>
+        Props flow from parent to child. Each middleware can augment props.
+        Handlers receive the accumulated props from all ancestors.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Props Flow Example</span>
+          <span class="code-lang">tsx</span>
+          </div>
+        <div class="code-body"><span class="cmt">// Middleware 1: adds requestId</span>
+<span class="kw">const</span> <span class="fn">requestIdMiddleware</span> = () => ({
+  requestId: crypto.randomUUID()
+});
+
+<span class="cmt">// Middleware 2: adds timing</span>
+<span class="kw">const</span> <span class="fn">timingMiddleware</span> = () => ({
+  startTime: Date.now()
+});
+
+<span class="cmt">// Middleware 3: adds user (uses existing props)</span>
+<span class="kw">const</span> <span class="fn">authMiddleware</span> = (props, request) => {
+  props.log.info(<span class="str">\`Request \${props.requestId}\`</span>);
+  <span class="kw">return</span> { user: getUser(request) };
+};
+
+<span class="cmt">// Tree: props accumulate</span>
+<span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={requestIdMiddleware}<span class="tag">&gt;</span>  <span class="cmt">{/* props: { requestId } */}</span>
+  <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={timingMiddleware}<span class="tag">&gt;</span>  <span class="cmt">{/* props: { requestId, startTime } */}</span>
+    <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={authMiddleware}<span class="tag">&gt;</span>  <span class="cmt">{/* props: { requestId, startTime, user } */}</span>
+      <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+
+<span class="cmt">// Handler receives all accumulated props</span>
+<span class="kw">export async function</span> <span class="fn">GET</span>({ requestId, startTime, user, db, log }) {
+  log.info(<span class="str">\`User \${user.id} on request \${requestId}\`</span>);
+}</div>
+          </div>
+      
+      <h2 id="tree-handling">Tree Nesting Patterns</h2>
+      <p>
+        Components can be nested in various patterns. The tree structure determines
+        which middleware applies to which routes.
+      </p>
+      
+      <h3>Pattern 1: Linear Chain</h3>
+      <p>All middleware applies to all routes in sequence.</p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Linear Chain</span>
+          <span class="code-lang">tsx</span>
+          </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="comp">Cors</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">RateLimiter</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;</span><span class="comp">DB</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="tag">/&gt;</span>  <span class="cmt">{/* All middleware applies */}</span>
+      <span class="tag">&lt;/</span><span class="comp">DB</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;/</span><span class="comp">RateLimiter</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Cors</span><span class="tag">&gt;</span></div>
+        </div>
+      
+      <h3>Pattern 2: Sibling Branches</h3>
+      <p>Different routes get different middleware.</p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Sibling Branches</span>
+          <span class="code-lang">tsx</span>
+      </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+  <span class="cmt">{/* Public routes - no auth */}</span>
+  <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/public"</span> <span class="tag">/&gt;</span>
+  
+  <span class="cmt">{/* Protected routes - with auth */}</span>
+  <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={authMiddleware}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/protected"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+  
+  <span class="cmt">{/* Admin routes - with admin check */}</span>
+  <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={adminMiddleware}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/admin"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Logger</span><span class="tag">&gt;</span></div>
+        </div>
+      
+      <h3>Pattern 3: Multiple Databases</h3>
+      <p>Different DB components wrap different route groups.</p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Multi-DB Pattern</span>
+          <span class="code-lang">tsx</span>
+          </div>
+        <div class="code-body"><span class="tag">&lt;</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+  <span class="cmt">{/* Auth routes use AuthDB */}</span>
+  <span class="tag">&lt;</span><span class="comp">DB</span> <span class="prop">provider</span>={createAuthDB}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/auth"</span> <span class="prop">prefix</span>=<span class="str">"/auth"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">DB</span><span class="tag">&gt;</span>
+  
+  <span class="cmt">{/* Content routes use ContentDB */}</span>
+  <span class="tag">&lt;</span><span class="comp">DB</span> <span class="prop">provider</span>={createContentDB}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/posts"</span> <span class="prop">prefix</span>=<span class="str">"/posts"</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/categories"</span> <span class="prop">prefix</span>=<span class="str">"/categories"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">DB</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Logger</span><span class="tag">&gt;</span></div>
+          </div>
+      
+      <h2 id="handlers">Route Handlers</h2>
+      <p>
+        Export async functions named after HTTP methods: <code>GET</code>, <code>POST</code>, 
+        <code>PUT</code>, <code>PATCH</code>, <code>DELETE</code>.
+      </p>
+      
+      <h3>Handler Props (HandlerProps)</h3>
+      <p>Every handler receives these props plus any added by middleware:</p>
+      
+      <table>
+        <tr><th>Prop</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>params</code></td><td>object</td><td>URL parameters from [brackets]</td></tr>
+        <tr><td><code>query</code></td><td>object</td><td>Query string parameters (?key=value)</td></tr>
+        <tr><td><code>body</code></td><td>any</td><td>Request body (parsed JSON)</td></tr>
+        <tr><td><code>db</code></td><td>Database</td><td>Database from nearest &lt;DB&gt; ancestor</td></tr>
+        <tr><td><code>log</code></td><td>Logger</td><td>Logger from nearest &lt;Logger&gt; ancestor</td></tr>
+        <tr><td><code>request</code></td><td>FastifyRequest</td><td>Raw Fastify request object</td></tr>
+        <tr><td><code>reply</code></td><td>FastifyReply</td><td>Raw Fastify reply object</td></tr>
+      </table>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">routes/posts/[id].tsx</span>
+          <span class="code-lang">tsx</span>
+          </div>
+        <div class="code-body"><span class="kw">import</span> { Response, Status, Body } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+<span class="kw">import type</span> { HandlerProps } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+
+<span class="kw">interface</span> <span class="fn">PostParams</span> {
+  id: <span class="fn">string</span>;
+}
+
+<span class="kw">export async function</span> <span class="fn">GET</span>({ params, db, log }: HandlerProps&lt;PostParams&gt;) {
+  <span class="kw">const</span> post = db.posts.findById(params.id);
+  
+  <span class="kw">if</span> (!post) {
+    <span class="kw">return</span> (
+      <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">404</span>} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ error: <span class="str">'Post not found'</span> }} <span class="tag">/&gt;</span>
+      <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+    );
+  }
+  
+  log.info({ postId: post.id }, <span class="str">'📄 Viewed post'</span>);
+  
+  <span class="kw">return</span> (
+    <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">200</span>} <span class="tag">/&gt;</span>
+      <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ success: <span class="num">true</span>, data: post }} <span class="tag">/&gt;</span>
+    <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+  );
+}
+        </div>
+      </div>
+      
+      <h2 id="config">Config Files (_config.tsx)</h2>
+      <p>
+        Create <code>_config.tsx</code> in a route directory to apply middleware 
+        to all routes in that directory and its subdirectories. The file exports 
+        a component that receives <code>children</code>.
+      </p>
+      
+      <div class="feature-box">
+        <h4>📁 Config File Rules</h4>
+        <ul>
+          <li>File must be named <code>_config.tsx</code> exactly</li>
+          <li>Must export default a component function</li>
+          <li>Component receives <code>{ children }</code> prop</li>
+          <li>Must render <code>{children}</code> somewhere in the tree</li>
+          <li>Applies to all routes in same directory and subdirectories</li>
+        </ul>
+        </div>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">routes/posts/_config.tsx</span>
+          <span class="code-lang">tsx</span>
+          </div>
+        <div class="code-body"><span class="kw">import</span> { Middleware, Logger } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+<span class="kw">import</span> { authMiddleware } <span class="kw">from</span> <span class="str">'../../middleware/auth'</span>;
+
+<span class="cmt">// Applied to all routes in /posts/*</span>
+<span class="kw">export default</span> ({ children }) => (
+  <span class="tag">&lt;</span><span class="comp">Logger</span> <span class="prop">level</span>=<span class="str">"debug"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={authMiddleware}<span class="tag">&gt;</span>
+      {children}  <span class="cmt">{/* Routes are rendered here */}</span>
+    <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+);
+        </div>
+      </div>
+      
+      <h3>Directory Structure with Config</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">File Structure</span>
+          <span class="code-lang">txt</span>
+        </div>
+        <div class="code-body">routes/
+├── posts/
+│   ├── _config.tsx      ← Applies to all below
+│   ├── index.tsx        ← GET /posts (has auth)
+│   ├── [id].tsx         ← GET /posts/:id (has auth)
+│   └── comments/
+│       ├── _config.tsx  ← Additional middleware
+│       └── index.tsx    ← GET /posts/comments (has both configs)
+└── public/
+    └── index.tsx        ← No config, no auth</div>
+      </div>
+      
+      <h2 id="auth">Authentication Patterns</h2>
+      <p>
+        Common patterns for handling authentication with Tagliatelle.
+      </p>
+      
+      <h3>Pattern 1: Optional Auth Middleware</h3>
+      <p>Middleware adds user to props if authenticated, doesn't block if not.</p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">middleware/optionalAuth.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">export const</span> <span class="fn">optionalAuth</span> = <span class="kw">async</span> (props, request) => {
+  <span class="kw">const</span> token = request.headers.authorization?.replace(<span class="str">'Bearer '</span>, <span class="str">''</span>);
+  
+  <span class="kw">if</span> (!token) {
+    <span class="kw">return</span> { isAuthenticated: <span class="num">false</span>, user: <span class="num">null</span> };
+  }
+  
+  <span class="kw">const</span> user = validateToken(token);
+  <span class="kw">return</span> { isAuthenticated: <span class="num">true</span>, user };
+};</div>
+          </div>
+      
+      <h3>Pattern 2: Required Auth Middleware</h3>
+      <p>Middleware blocks unauthenticated requests with 401.</p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">middleware/requireAuth.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">export const</span> <span class="fn">requireAuth</span> = <span class="kw">async</span> (props, request) => {
+  <span class="kw">const</span> token = request.headers.authorization?.replace(<span class="str">'Bearer '</span>, <span class="str">''</span>);
+  
+  <span class="kw">if</span> (!token) {
+    <span class="kw">return</span> (
+      <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">401</span>} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ error: <span class="str">'Authentication required'</span> }} <span class="tag">/&gt;</span>
+      <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+    );
+  }
+  
+  <span class="kw">const</span> user = validateToken(token);
+  <span class="kw">if</span> (!user) {
+    <span class="kw">return</span> (
+      <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">401</span>} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ error: <span class="str">'Invalid token'</span> }} <span class="tag">/&gt;</span>
+      <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+    );
+  }
+  
+  <span class="kw">return</span> { user, isAuthenticated: <span class="num">true</span> };
+};</div>
+      </div>
+      
+      <h3>Pattern 3: Role-Based Access Control</h3>
+      <p>Factory function that creates middleware for specific roles.</p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">middleware/requireRole.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">export const</span> <span class="fn">requireRole</span> = (...roles: <span class="fn">string</span>[]) => {
+  <span class="kw">return async</span> (props, request) => {
+    <span class="cmt">// Assumes requireAuth ran first and added user to props</span>
+    <span class="kw">if</span> (!props.user || !roles.includes(props.user.role)) {
+      <span class="kw">return</span> (
+        <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+          <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">403</span>} <span class="tag">/&gt;</span>
+          <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ 
+            error: <span class="str">'Forbidden'</span>,
+            required: roles 
+          }} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+      );
+    }
+  };
+};
+
+<span class="cmt">// Usage in tree</span>
+<span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={requireAuth}<span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={requireRole(<span class="str">'admin'</span>, <span class="str">'editor'</span>)}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/admin"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h2 id="custom">Custom Components & Wrappers</h2>
+      <p>
+        Tagliatelle supports creating your own reusable components and wrapper tags. 
+        This is one of the most powerful features - compose your own abstractions!
+      </p>
+      
+      <h3>Pattern 1: Simple Wrapper Component</h3>
+      <p>
+        Create a component that wraps children with specific middleware configuration.
+        Perfect for domain-specific route groups.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">components/ApiRoutes.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> { Middleware, RateLimiter, Logger } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+<span class="kw">import</span> { apiKeyAuth } <span class="kw">from</span> <span class="str">'../middleware/auth'</span>;
+
+<span class="cmt">// Custom wrapper for API routes with stricter rate limiting</span>
+<span class="kw">export const</span> <span class="comp">ApiRoutes</span> = ({ children }) => (
+  <span class="tag">&lt;</span><span class="comp">RateLimiter</span> <span class="prop">max</span>={<span class="num">60</span>} <span class="prop">timeWindow</span>=<span class="str">"1 minute"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Logger</span> <span class="prop">level</span>=<span class="str">"debug"</span><span class="tag">&gt;</span>
+      <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={apiKeyAuth}<span class="tag">&gt;</span>
+        {children}
+      <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;/</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">RateLimiter</span><span class="tag">&gt;</span>
+);
+
+<span class="cmt">// Usage in server.tsx:</span>
+<span class="tag">&lt;</span><span class="comp">ApiRoutes</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="fn">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/api/v1"</span> <span class="prop">prefix</span>=<span class="str">"/api/v1"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;</span><span class="fn">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/api/v2"</span> <span class="prop">prefix</span>=<span class="str">"/api/v2"</span> <span class="tag">/&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">ApiRoutes</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h3>Pattern 2: Configurable Wrapper</h3>
+      <p>
+        Accept props to make your wrapper configurable for different use cases.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">components/ProtectedRoutes.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> { Middleware, Logger } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+<span class="kw">import</span> { requireAuth, requireRole } <span class="kw">from</span> <span class="str">'../middleware/auth'</span>;
+
+<span class="kw">interface</span> <span class="fn">ProtectedProps</span> {
+  children: <span class="fn">React.ReactNode</span>;
+  roles?: (<span class="str">'admin'</span> | <span class="str">'editor'</span> | <span class="str">'user'</span>)[];
+  logLevel?: <span class="str">'debug'</span> | <span class="str">'info'</span>;
+}
+
+<span class="kw">export const</span> <span class="comp">ProtectedRoutes</span> = ({ 
+  children, 
+  roles, 
+  logLevel = <span class="str">'info'</span> 
+}: ProtectedProps) => (
+  <span class="tag">&lt;</span><span class="comp">Logger</span> <span class="prop">level</span>={logLevel}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={requireAuth}<span class="tag">&gt;</span>
+      {roles ? (
+        <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={requireRole(...roles)}<span class="tag">&gt;</span>
+          {children}
+        <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+      ) : (
+        children
+      )}
+    <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+);
+
+<span class="cmt">// Usage:</span>
+<span class="tag">&lt;</span><span class="comp">ProtectedRoutes</span> <span class="prop">roles</span>={[<span class="str">'admin'</span>]} <span class="prop">logLevel</span>=<span class="str">"debug"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="fn">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/admin"</span> <span class="tag">/&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">ProtectedRoutes</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h3>Pattern 3: Middleware Factory Functions</h3>
+      <p>
+        Create factory functions that return configured middleware. 
+        This gives maximum flexibility for reusable logic.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">middleware/factories.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> { Response, Status, Body } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+
+<span class="cmt">// Factory: Create role checker for any roles</span>
+<span class="kw">export const</span> <span class="fn">requireRole</span> = (...allowedRoles: <span class="fn">string</span>[]) => {
+  <span class="kw">return async</span> (props, request) => {
+    <span class="kw">if</span> (!props.user || !allowedRoles.includes(props.user.role)) {
+      <span class="kw">return</span> (
+        <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+          <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">403</span>} <span class="tag">/&gt;</span>
+          <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ 
+            error: <span class="str">'Forbidden'</span>, 
+            required: allowedRoles 
+          }} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+      );
+    }
+  };
+};
+
+<span class="cmt">// Factory: Add custom headers</span>
+<span class="kw">export const</span> <span class="fn">addHeaders</span> = (headers: <span class="fn">Record</span>&lt;<span class="fn">string</span>, <span class="fn">string</span>&gt;) => {
+  <span class="kw">return async</span> (props, request, reply) => {
+    Object.entries(headers).forEach(([key, value]) => {
+      reply.header(key, value);
+    });
+  };
+};
+
+<span class="cmt">// Factory: Validate request body</span>
+<span class="kw">export const</span> <span class="fn">validateBody</span> = (requiredFields: <span class="fn">string</span>[]) => {
+  <span class="kw">return async</span> (props, request) => {
+    <span class="kw">const</span> missing = requiredFields.filter(f => !request.body?.[f]);
+    <span class="kw">if</span> (missing.length > <span class="num">0</span>) {
+      <span class="kw">return</span> (
+        <span class="tag">&lt;</span><span class="comp">Response</span><span class="tag">&gt;</span>
+          <span class="tag">&lt;</span><span class="fn">Status</span> <span class="prop">code</span>={<span class="num">400</span>} <span class="tag">/&gt;</span>
+          <span class="tag">&lt;</span><span class="fn">Body</span> <span class="prop">data</span>={{ 
+            error: <span class="str">'Missing fields'</span>, 
+            missing 
+          }} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;/</span><span class="comp">Response</span><span class="tag">&gt;</span>
+      );
+    }
+  };
+};
+
+<span class="cmt">// Usage:</span>
+<span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={requireRole(<span class="str">'admin'</span>, <span class="str">'moderator'</span>)}<span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={addHeaders({ <span class="str">'X-Api-Version'</span>: <span class="str">'2.0'</span> })}<span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="fn">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/admin"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h3>Pattern 4: Domain-Specific Component</h3>
+      <p>
+        Create components for specific domains that bundle DB + routes + middleware.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">components/BlogModule.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> { Routes, DB, Middleware, RateLimiter } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+<span class="kw">import</span> { createBlogDB } <span class="kw">from</span> <span class="str">'../databases/blogDB'</span>;
+<span class="kw">import</span> { authMiddleware } <span class="kw">from</span> <span class="str">'../middleware/auth'</span>;
+
+<span class="kw">interface</span> <span class="fn">BlogModuleProps</span> {
+  prefix?: <span class="fn">string</span>;
+  rateLimit?: <span class="fn">number</span>;
+}
+
+<span class="cmt">// Self-contained blog module with its own DB and routes</span>
+<span class="kw">export const</span> <span class="comp">BlogModule</span> = ({ 
+  prefix = <span class="str">'/blog'</span>, 
+  rateLimit = <span class="num">100</span> 
+}: BlogModuleProps) => (
+  <span class="tag">&lt;</span><span class="comp">RateLimiter</span> <span class="prop">max</span>={rateLimit} <span class="prop">timeWindow</span>=<span class="str">"1 minute"</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">DB</span> <span class="prop">provider</span>={createBlogDB}<span class="tag">&gt;</span>
+      <span class="tag">&lt;</span><span class="comp">Middleware</span> <span class="prop">use</span>={authMiddleware}<span class="tag">&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/blog/posts"</span> <span class="prop">prefix</span>={<span class="str">\`\${prefix}/posts\`</span>} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/blog/comments"</span> <span class="prop">prefix</span>={<span class="str">\`\${prefix}/comments\`</span>} <span class="tag">/&gt;</span>
+        <span class="tag">&lt;</span><span class="fn">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes/blog/tags"</span> <span class="prop">prefix</span>={<span class="str">\`\${prefix}/tags\`</span>} <span class="tag">/&gt;</span>
+      <span class="tag">&lt;/</span><span class="comp">Middleware</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;/</span><span class="comp">DB</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">RateLimiter</span><span class="tag">&gt;</span>
+);
+
+<span class="cmt">// Clean server.tsx:</span>
+<span class="tag">&lt;</span><span class="comp">Server</span> <span class="prop">port</span>={<span class="num">3000</span>}<span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">BlogModule</span> <span class="prop">prefix</span>=<span class="str">"/api/blog"</span> <span class="prop">rateLimit</span>={<span class="num">50</span>} <span class="tag">/&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">AuthModule</span> <span class="prop">prefix</span>=<span class="str">"/api/auth"</span> <span class="tag">/&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">AdminModule</span> <span class="prop">prefix</span>=<span class="str">"/api/admin"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Logger</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Server</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h3 id="swagger">Pattern 5: Fastify Plugin Wrapper (Swagger Example)</h3>
+      <p>
+        Wrap Fastify plugins as Tagliatelle components. This example shows how to 
+        integrate <code>@fastify/swagger</code> as a custom <code>&lt;Swagger&gt;</code> tag.
+      </p>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">components/Swagger.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> type { TagliatelleNode } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+
+<span class="cmt">// Swagger configuration props</span>
+<span class="kw">export interface</span> <span class="fn">SwaggerProps</span> {
+  children: TagliatelleNode;
+  title?: <span class="fn">string</span>;
+  description?: <span class="fn">string</span>;
+  version?: <span class="fn">string</span>;
+  routePrefix?: <span class="fn">string</span>;
+}
+
+<span class="cmt">/**
+ * Custom Swagger Component
+ * Wraps @fastify/swagger and @fastify/swagger-ui
+ */</span>
+<span class="kw">export const</span> <span class="comp">Swagger</span> = ({
+  children,
+  title = <span class="str">'My API'</span>,
+  description = <span class="str">'API Documentation'</span>,
+  version = <span class="str">'1.0.0'</span>,
+  routePrefix = <span class="str">'/documentation'</span>,
+}: SwaggerProps) => {
+  <span class="cmt">// In real implementation: register fastify plugins</span>
+  <span class="cmt">// fastify.register(swagger, { openapi: { info: { title, description, version } } });</span>
+  <span class="cmt">// fastify.register(swaggerUI, { routePrefix });</span>
+  
+  <span class="kw">return</span> children;
+};
+
+<span class="cmt">// Usage in server.tsx:</span>
+<span class="tag">&lt;</span><span class="comp">Server</span> <span class="prop">port</span>={<span class="num">3000</span>}<span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Swagger</span> 
+    <span class="prop">title</span>=<span class="str">"Tagliatelle API"</span>
+    <span class="prop">description</span>=<span class="str">"Built with JSX"</span>
+    <span class="prop">version</span>=<span class="str">"1.0.0"</span>
+    <span class="prop">routePrefix</span>=<span class="str">"/docs"</span>
+  <span class="tag">&gt;</span>
+    <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes"</span> <span class="tag">/&gt;</span>
+  <span class="tag">&lt;/</span><span class="comp">Swagger</span><span class="tag">&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Server</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <div class="response-example" style="margin: 20px 0;">
+        <div class="response-header" style="background: rgba(66, 165, 245, 0.1);">
+          <span style="color: var(--accent-blue); font-weight: 600;">💡 Pattern Example</span>
+        </div>
+        <div class="response-body" style="font-family: 'Outfit', sans-serif;">This <code>&lt;Swagger&gt;</code> component demonstrates how to wrap Fastify plugins 
+as Tagliatelle tags. See <code>components/Swagger.tsx</code> for the implementation.
+This pattern can be used for any Fastify plugin integration.</div>
+      </div>
+      
+      <div class="feature-box">
+        <h4>💡 Custom Component Rules</h4>
+        <ul>
+          <li><strong>Accept children</strong> - Always pass through <code>{children}</code></li>
+          <li><strong>Use built-in components</strong> - Compose from Middleware, Logger, DB, etc.</li>
+          <li><strong>Props for config</strong> - Make components configurable via props</li>
+          <li><strong>Return JSX</strong> - Component must return a valid component tree</li>
+          <li><strong>Factory for dynamic</strong> - Use factory functions for runtime-configured middleware</li>
+        </ul>
+      </div>
+      
+      <h2 id="plugins" style="margin-top: 60px;">🔌 Plugin System (createPlugin)</h2>
+      <p>
+        The <code>createPlugin</code> API lets you wrap any Fastify plugin as a Tagliatelle JSX component.
+        Perfect for integrating Swagger, WebSocket, GraphQL, Redis, and more!
+      </p>
+      
+      <div class="feature-box">
+        <h4>📦 Available Plugins</h4>
+        <ul>
+          <li><code>&lt;Swagger&gt;</code> - OpenAPI documentation (<code>@fastify/swagger</code>)</li>
+          <li><code>&lt;WS&gt;</code> - WebSocket support (<code>@fastify/websocket</code>)</li>
+          <li><code>&lt;GraphQL&gt;</code> - GraphQL API (<code>mercurius</code>)</li>
+          <li><code>&lt;Metrics&gt;</code> - Prometheus metrics (<code>fastify-metrics</code>)</li>
+          <li><code>&lt;Redis&gt;</code> - Redis caching (<code>@fastify/redis</code>)</li>
+        </ul>
+      </div>
+      
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">Creating a Custom Plugin</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> { createPlugin } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+<span class="kw">import type</span> { FastifyInstance } <span class="kw">from</span> <span class="str">'fastify'</span>;
+
+<span class="cmt">// Define your plugin props</span>
+<span class="kw">interface</span> <span class="fn">MyPluginProps</span> {
+  option1?: <span class="fn">string</span>;
+  option2?: <span class="fn">number</span>;
+}
+
+<span class="cmt">// Create the plugin with createPlugin</span>
+<span class="kw">export const</span> <span class="comp">MyPlugin</span> = createPlugin&lt;MyPluginProps&gt;(
+  <span class="str">'MyPlugin'</span>,  <span class="cmt">// Plugin name for logs</span>
+  <span class="kw">async</span> (fastify: FastifyInstance, props: MyPluginProps) => {
+    <span class="cmt">// Register Fastify plugins here</span>
+    <span class="kw">await</span> fastify.register(somePlugin, {
+      option: props.option1 ?? <span class="str">'default'</span>
+    });
+    
+    console.log(<span class="str">'✓ MyPlugin loaded'</span>);
+  }
+);
+
+<span class="cmt">// Use as JSX in server.tsx:</span>
+<span class="tag">&lt;</span><span class="comp">Server</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">MyPlugin</span> <span class="prop">option1</span>=<span class="str">"value"</span> <span class="prop">option2</span>={<span class="num">42</span>} <span class="tag">/&gt;</span>
+  <span class="tag">&lt;</span><span class="comp">Routes</span> <span class="prop">dir</span>=<span class="str">"./routes"</span> <span class="tag">/&gt;</span>
+<span class="tag">&lt;/</span><span class="comp">Server</span><span class="tag">&gt;</span></div>
+      </div>
+      
+      <h3>Swagger Plugin Example</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">plugins/swagger.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">import</span> { createPlugin } <span class="kw">from</span> <span class="str">'tagliatelle'</span>;
+
+<span class="kw">export interface</span> <span class="fn">SwaggerProps</span> {
+  title?: <span class="fn">string</span>;
+  version?: <span class="fn">string</span>;
+  path?: <span class="fn">string</span>;
+  tags?: Array&lt;{ name: <span class="fn">string</span>; description?: <span class="fn">string</span> }&gt;;
+}
+
+<span class="kw">export const</span> <span class="comp">Swagger</span> = createPlugin&lt;SwaggerProps&gt;(
+  <span class="str">'Swagger'</span>,
+  <span class="kw">async</span> (fastify, props) => {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> swagger = <span class="kw">await</span> <span class="fn">import</span>(<span class="str">'@fastify/swagger'</span>);
+      <span class="kw">const</span> swaggerUi = <span class="kw">await</span> <span class="fn">import</span>(<span class="str">'@fastify/swagger-ui'</span>);
+      
+      <span class="kw">await</span> fastify.register(swagger.default, {
+        openapi: {
+          info: {
+            title: props.title ?? <span class="str">'API Documentation'</span>,
+            version: props.version ?? <span class="str">'1.0.0'</span>
+          },
+          tags: props.tags
+        }
+      });
+      
+      <span class="kw">await</span> fastify.register(swaggerUi.default, {
+        routePrefix: props.path ?? <span class="str">'/docs'</span>
+      });
+      
+      console.log(<span class="str">\`📚 Swagger → \${props.path ?? '/docs'}\`</span>);
+    } <span class="kw">catch</span> {
+      console.log(<span class="str">'⚠ Swagger skipped (install dependencies)'</span>);
+    }
+  }
+);
+
+<span class="cmt">// Usage:</span>
+<span class="tag">&lt;</span><span class="comp">Swagger</span> 
+  <span class="prop">title</span>=<span class="str">"My API"</span>
+  <span class="prop">version</span>=<span class="str">"2.0.0"</span>
+  <span class="prop">path</span>=<span class="str">"/swagger"</span>
+  <span class="prop">tags</span>={[
+    { name: <span class="str">'users'</span>, description: <span class="str">'User operations'</span> },
+    { name: <span class="str">'posts'</span>, description: <span class="str">'Post operations'</span> }
+  ]}
+<span class="tag">/&gt;</span></div>
+      </div>
+      
+      <h3>WebSocket Plugin Example</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">plugins/websocket.tsx</span>
+          <span class="code-lang">tsx</span>
+        </div>
+        <div class="code-body"><span class="kw">export const</span> <span class="comp">WS</span> = createPlugin&lt;WSProps&gt;(
+  <span class="str">'WebSocket'</span>,
+  <span class="kw">async</span> (fastify, props) => {
+    <span class="kw">const</span> websocket = <span class="kw">await</span> <span class="fn">import</span>(<span class="str">'@fastify/websocket'</span>);
+    <span class="kw">await</span> fastify.register(websocket.default);
+    
+    fastify.get(props.path ?? <span class="str">'/ws'</span>, { websocket: <span class="num">true</span> }, (socket) => {
+      socket.on(<span class="str">'message'</span>, (msg) => socket.send(<span class="str">\`Echo: \${msg}\`</span>));
+    });
+  }
+);
+
+<span class="cmt">// Usage:</span>
+<span class="tag">&lt;</span><span class="comp">WS</span> <span class="prop">path</span>=<span class="str">"/realtime"</span> <span class="tag">/&gt;</span></div>
+      </div>
+      
+      <div class="feature-box">
+        <h4>🔧 Plugin Handler Signature</h4>
+        <div class="code-block" style="margin-top: 12px;">
+          <div class="code-body"><span class="kw">type</span> <span class="fn">PluginHandler</span>&lt;TProps&gt; = (
+  fastify: FastifyInstance,  <span class="cmt">// The Fastify instance</span>
+  props: TProps,             <span class="cmt">// Props passed to the component</span>
+  config: RouteConfig        <span class="cmt">// Current route configuration</span>
+) => <span class="fn">Promise</span>&lt;<span class="fn">void</span>&gt; | <span class="fn">void</span>;</div>
+        </div>
+      </div>
+      
+      <div class="feature-box" style="margin-top: 40px;">
+        <h4>📖 Quick Reference - All Components</h4>
+        <table style="margin: 0;">
+          <tr><th>Component</th><th>Purpose</th><th>Key Props</th></tr>
+          <tr><td><code>&lt;Server&gt;</code></td><td>HTTP server root</td><td>port, host</td></tr>
+          <tr><td><code>&lt;Routes&gt;</code></td><td>File-based routing</td><td>dir, prefix</td></tr>
+          <tr><td><code>&lt;Cors&gt;</code></td><td>CORS headers</td><td>origin, methods</td></tr>
+          <tr><td><code>&lt;Logger&gt;</code></td><td>Request logging</td><td>level</td></tr>
+          <tr><td><code>&lt;RateLimiter&gt;</code></td><td>Rate limiting</td><td>max, timeWindow</td></tr>
+          <tr><td><code>&lt;DB&gt;</code></td><td>Database provider</td><td>provider, name</td></tr>
+          <tr><td><code>&lt;Middleware&gt;</code></td><td>Custom middleware</td><td>use</td></tr>
+          <tr><td><code>&lt;Group&gt;</code></td><td>Group siblings</td><td>-</td></tr>
+          <tr><td><code>&lt;Response&gt;</code></td><td>HTTP response</td><td>-</td></tr>
+          <tr><td><code>&lt;Status&gt;</code></td><td>Status code</td><td>code</td></tr>
+          <tr><td><code>&lt;Headers&gt;</code></td><td>Response headers</td><td>headers</td></tr>
+          <tr><td><code>&lt;Body&gt;</code></td><td>Response body</td><td>data</td></tr>
+        </table>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
+`;
+
+export async function GET({ log }: HandlerProps) {
+  log.info('📚 Documentation page served');
+  
+  return (
+    <Response>
+      <Status code={200} />
+      <Headers headers={{ 
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=3600',
+      }} />
+      <Body data={docsHTML} />
+    </Response>
+  );
+}

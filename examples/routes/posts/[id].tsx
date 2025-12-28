@@ -7,8 +7,27 @@
  */
 
 import { Response, Status, Body, Err } from 'tagliatelle';
-import type { HandlerProps } from 'tagliatelle';
-import { posts } from './_data.js';
+import type { HandlerProps, RouteSchema } from 'tagliatelle';
+import type { ContentDB } from '../../databases/contentDB.js';
+
+// OpenAPI schemas for Swagger
+export const GET_SCHEMA: RouteSchema = {
+  tags: ['posts'],
+  summary: 'Get a post by ID',
+  description: 'Retrieve a single post by its ID',
+};
+
+export const PUT_SCHEMA: RouteSchema = {
+  tags: ['posts'],
+  summary: 'Update a post',
+  description: 'Update an existing post by ID',
+};
+
+export const DELETE_SCHEMA: RouteSchema = {
+  tags: ['posts'],
+  summary: 'Delete a post',
+  description: 'Delete a post by ID',
+};
 
 interface PostParams {
   id: string;
@@ -17,20 +36,24 @@ interface PostParams {
 interface UpdatePostBody {
   title?: string;
   content?: string;
-  author?: string;
 }
 
 /**
  * GET /posts/:id - Get a single post
  */
-export async function GET({ params, log }: HandlerProps<PostParams>) {
+export async function GET({ params, log, db }: HandlerProps<PostParams>) {
+  const database = db as ContentDB;
+  
   log.info(`Fetching post ${params.id}`);
   
-  const post = posts.find(p => p.id === params.id);
+  const post = database.posts.findById(params.id);
   
   if (!post) {
     return <Err code={404} message="Post not found" />;
   }
+  
+  // Increment views
+  database.posts.incrementViews(params.id);
   
   return (
     <Response>
@@ -46,19 +69,18 @@ export async function GET({ params, log }: HandlerProps<PostParams>) {
 /**
  * PUT /posts/:id - Update a post
  */
-export async function PUT({ params, body, log }: HandlerProps<PostParams, UpdatePostBody>) {
+export async function PUT({ params, body, log, db }: HandlerProps<PostParams, UpdatePostBody>) {
+  const database = db as ContentDB;
+  
   log.info(`Updating post ${params.id}`);
   
-  const postIndex = posts.findIndex(p => p.id === params.id);
+  const post = database.posts.findById(params.id);
   
-  if (postIndex === -1) {
+  if (!post) {
     return <Err code={404} message="Post not found" />;
   }
   
-  posts[postIndex] = {
-    ...posts[postIndex],
-    ...body
-  };
+  const updated = database.posts.update(params.id, body);
   
   return (
     <Response>
@@ -66,7 +88,7 @@ export async function PUT({ params, body, log }: HandlerProps<PostParams, Update
       <Body data={{
         success: true,
         message: 'Post updated successfully!',
-        data: posts[postIndex]
+        data: updated
       }} />
     </Response>
   );
@@ -75,16 +97,18 @@ export async function PUT({ params, body, log }: HandlerProps<PostParams, Update
 /**
  * DELETE /posts/:id - Delete a post
  */
-export async function DELETE({ params, log }: HandlerProps<PostParams>) {
+export async function DELETE({ params, log, db }: HandlerProps<PostParams>) {
+  const database = db as ContentDB;
+  
   log.info(`Deleting post ${params.id}`);
   
-  const postIndex = posts.findIndex(p => p.id === params.id);
+  const post = database.posts.findById(params.id);
   
-  if (postIndex === -1) {
+  if (!post) {
     return <Err code={404} message="Post not found" />;
   }
   
-  const deleted = posts.splice(postIndex, 1)[0];
+  database.posts.delete(params.id);
   
   return (
     <Response>
@@ -92,7 +116,7 @@ export async function DELETE({ params, log }: HandlerProps<PostParams>) {
       <Body data={{
         success: true,
         message: 'Post deleted successfully!',
-        data: deleted
+        data: post
       }} />
     </Response>
   );

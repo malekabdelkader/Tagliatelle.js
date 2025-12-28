@@ -1,15 +1,21 @@
 /**
- * 🍝 Root Routes Config
+ * 🍝 ROOT CONFIG
  * 
- * This config applies to ALL routes passed as children.
- * Config wraps children - if no children, config won't apply!
+ * This config applies to ALL routes.
+ * Demonstrates:
+ * - Logger level inheritance (debug for development)
+ * - Request ID middleware that runs for every route
  */
 
-import { Logger } from 'tagliatelle';
+import { Logger, Middleware } from 'tagliatelle';
 import type { TagliatelleNode } from 'tagliatelle';
+import { requestIdMiddleware } from '../middleware/validation.js';
 
 export default ({ children }: { children: TagliatelleNode[] }) => (
-  <Logger level="info">
-    {children}
+  <Logger level="debug">
+    <Middleware use={requestIdMiddleware}>
+      {children}
+    </Middleware>
   </Logger>
 );
+

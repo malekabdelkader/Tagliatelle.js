@@ -1,7 +1,5 @@
 /**
- * 🍝 Metrics Plugin Example
- * 
- * This shows how to add Prometheus metrics to Tagliatelle.
+ * 🍝 Metrics Plugin - Prometheus Monitoring
  * 
  * Usage:
  *   <Metrics path="/metrics" />
@@ -11,46 +9,36 @@
  */
 
 import { createPlugin } from 'tagliatelle';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 📊 METRICS PLUGIN TYPES
-// ═══════════════════════════════════════════════════════════════════════════
+import type { FastifyInstance } from 'fastify';
 
 export interface MetricsProps {
-  /** Metrics endpoint path (default: "/metrics") */
   path?: string;
-  /** Default metrics to collect */
   defaultMetrics?: boolean;
-  /** Route metrics */
   routeMetrics?: boolean;
-  /** Custom labels */
-  labels?: Record<string, string>;
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 🔌 METRICS PLUGIN
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Prometheus metrics plugin for monitoring
- */
 export const Metrics = createPlugin<MetricsProps>(
   'Metrics',
-  async (fastify, props) => {
-    // Dynamic import - package is optional
-    const metricsPlugin = await import('fastify-metrics');
-    
-    await fastify.register(metricsPlugin.default, {
-      endpoint: props.path ?? '/metrics',
-      defaultMetrics: {
-        enabled: props.defaultMetrics ?? true,
-        labels: props.labels
-      },
-      routeMetrics: {
-        enabled: props.routeMetrics ?? true
-      }
-    });
+  async (fastify: FastifyInstance, props: MetricsProps) => {
+    try {
+      const metricsPlugin = await import('fastify-metrics');
+      
+      await fastify.register(metricsPlugin.default, {
+        endpoint: props.path ?? '/metrics',
+        defaultMetrics: {
+          enabled: props.defaultMetrics ?? true
+        },
+        routeMetrics: {
+          enabled: props.routeMetrics ?? true
+        }
+      });
+      
+      console.log(`  📈 Metrics → ${props.path ?? '/metrics'}`);
+    } catch {
+      console.log('  ⚠ Metrics skipped (install fastify-metrics)');
+    }
   }
 );
 
 export default Metrics;
+

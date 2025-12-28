@@ -1,7 +1,35 @@
 /**
- * Type declarations for optional dependencies
- * These packages are optional and only needed if you use the corresponding plugin
+ * Type declarations for optional plugin dependencies
+ * These packages are optional - install if you want to use the corresponding plugin
  */
+
+// Swagger
+declare module '@fastify/swagger' {
+  import type { FastifyPluginCallback } from 'fastify';
+  const swagger: FastifyPluginCallback<{
+    openapi?: {
+      info?: { title?: string; version?: string; description?: string };
+      tags?: Array<{ name: string; description?: string }>;
+    };
+  }>;
+  export default swagger;
+}
+
+declare module '@fastify/swagger-ui' {
+  import type { FastifyPluginCallback } from 'fastify';
+  const swaggerUi: FastifyPluginCallback<{
+    routePrefix?: string;
+    uiConfig?: Record<string, unknown>;
+  }>;
+  export default swaggerUi;
+}
+
+// WebSocket
+declare module '@fastify/websocket' {
+  import type { FastifyPluginCallback } from 'fastify';
+  const websocket: FastifyPluginCallback<Record<string, unknown>>;
+  export default websocket;
+}
 
 // GraphQL
 declare module 'mercurius' {
@@ -15,25 +43,13 @@ declare module 'mercurius' {
   export default mercurius;
 }
 
-// WebSocket
-declare module '@fastify/websocket' {
-  import type { FastifyPluginCallback } from 'fastify';
-  const websocket: FastifyPluginCallback<Record<string, unknown>>;
-  export default websocket;
-}
-
 // Metrics
 declare module 'fastify-metrics' {
   import type { FastifyPluginCallback } from 'fastify';
   const metrics: FastifyPluginCallback<{
     endpoint?: string;
-    defaultMetrics?: {
-      enabled?: boolean;
-      labels?: Record<string, string>;
-    };
-    routeMetrics?: {
-      enabled?: boolean;
-    };
+    defaultMetrics?: { enabled?: boolean };
+    routeMetrics?: { enabled?: boolean };
   }>;
   export default metrics;
 }
@@ -46,8 +62,6 @@ declare module '@fastify/redis' {
     host?: string;
     port?: number;
     password?: string;
-    namespace?: string;
   }>;
   export default redis;
 }
-

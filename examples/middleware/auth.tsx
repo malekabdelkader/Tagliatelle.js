@@ -1,214 +1,158 @@
 /**
- * 🌶️ Auth Middleware - The Spice (JSX Edition)
+ * 🔐 AUTHENTICATION MIDDLEWARE
  * 
- * Authentication middleware using JSX components!
- * Includes security best practices:
- * - No hints about valid key format in error messages
- * - Rate limiting on failed attempts
- * - Safe key comparison
+ * Provides authentication for the application.
  */
 
-import { Augment, Err, authFailureTracker, isSafeString } from 'tagliatelle';
-import type { HandlerProps, MiddlewareFunction } from 'tagliatelle';
+import { Response, Status, Body } from 'tagliatelle';
+import type { HandlerProps } from 'tagliatelle';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 🔐 AUTH MIDDLEWARE
-// ═══════════════════════════════════════════════════════════════════════════
+export type UserRole = 'admin' | 'editor' | 'user' | 'guest';
 
-/**
- * Gets client IP safely
- */
-function getClientIP(request: FastifyRequest): string {
-  // Check for forwarded headers (behind proxy)
-  const forwarded = request.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    return forwarded.split(',')[0].trim();
-  }
-  return request.ip || 'unknown';
+export interface AuthUser {
+  id: string;
+  name: string;
+  role: UserRole;
+  email: string;
 }
 
-/**
- * Constant-time string comparison to prevent timing attacks
- */
-function safeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    // Still do comparison to prevent timing leak on length
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-      result |= a.charCodeAt(i) ^ (b.charCodeAt(i % b.length) || 0);
-    }
-    return false;
-  }
-  
-  let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return result === 0;
-}
+// Token store with properly typed users
+const TOKENS = new Map<string, AuthUser>([
+  ['token_admin_123', { id: 'user_1', name: 'System Admin', role: 'admin', email: 'admin@company.io' }],
+  ['token_editor_456', { id: 'user_2', name: 'Content Editor', role: 'editor', email: 'editor@company.io' }],
+  ['token_reader_789', { id: 'user_3', name: 'Regular Reader', role: 'user', email: 'reader@company.io' }],
+]);
+
+const GUEST_USER: AuthUser = { id: 'guest', name: 'Guest', role: 'guest', email: '' };
 
 /**
- * Validates an API key format without revealing expected format
- */
-function isValidApiKeyFormat(key: unknown): key is string {
-  if (typeof key !== 'string') return false;
-  if (!isSafeString(key)) return false;
-  if (key.length < 10 || key.length > 256) return false;
-  // Only allow alphanumeric and dashes
-  return /^[a-zA-Z0-9-]+$/.test(key);
-}
-
-/**
- * Simple API key authentication middleware
- * Returns JSX components for both success and failure cases
+ * Optional Auth Middleware
  * 
- * Security features:
- * - Rate limiting on failed attempts
- * - Constant-time comparison
- * - No format hints in error messages
+ * Checks for auth token but doesn't block if missing.
+ * Use this for routes where auth is optional (viewing posts).
  */
-export const authMiddleware: MiddlewareFunction = async (
+export const authMiddleware = async (
   props: HandlerProps,
   request: FastifyRequest,
   _reply: FastifyReply
 ) => {
-  const clientIP = getClientIP(request);
+  const authHeader = request.headers.authorization;
   
-  // Check if IP is blocked due to too many failures
-  if (authFailureTracker.isBlocked(clientIP)) {
-    props.log.warn('Blocked IP attempted access');
-    return (
-      <Err 
-        code={429} 
-        message="Too many failed attempts. Please try again later." 
-      />
-    );
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { user: GUEST_USER, isAuthenticated: false };
   }
   
-  const apiKey = request.headers['x-api-key'];
+  const token = authHeader.substring(7);
+  const user = TOKENS.get(token);
   
-  // Validate format first
-  if (!isValidApiKeyFormat(apiKey)) {
-    authFailureTracker.recordFailure(clientIP);
-    // Generic error - don't reveal expected format
-    return (
-      <Err 
-        code={401} 
-        message="Authentication required" 
-      />
-    );
+  if (!user) {
+    return { user: GUEST_USER, isAuthenticated: false };
   }
   
-  // Validate key (in real app, check against database)
-  // Using constant-time comparison for the prefix check
-  const expectedPrefix = 'pasta-';
-  const keyPrefix = apiKey.slice(0, expectedPrefix.length);
+  props.log.debug({ userId: user.id, role: user.role }, `🔓 Authenticated: ${user.name}`);
   
-  if (!safeCompare(keyPrefix, expectedPrefix)) {
-    authFailureTracker.recordFailure(clientIP);
-    // Same error message - don't reveal what's wrong
-    return (
-      <Err 
-        code={401} 
-        message="Authentication required" 
-      />
-    );
-  }
-  
-  // Clear failures on success
-  authFailureTracker.clearFailures(clientIP);
-  
-  props.log.info('User authenticated');
-  
-  // Return user data to augment props
-  // Don't include the actual API key, even partially
-  return (
-    <Augment 
-      user={{
-        id: 'user-1',
-        name: 'Authenticated Chef',
-        authenticatedAt: new Date().toISOString()
-      }} 
-    />
-  );
+  return { user, isAuthenticated: true };
 };
 
 /**
- * Role-based authorization middleware factory
+ * Required Auth Middleware
  * 
- * Security: Don't reveal which roles exist in error messages
+ * Blocks request if not authenticated.
+ * Use this for routes that require login.
  */
-export function requireRole(role: string): MiddlewareFunction {
-  return async (props: HandlerProps, _request: FastifyRequest, _reply: FastifyReply) => {
-    const user = props.user as { role?: string } | undefined;
-    
-    if (!user || user.role !== role) {
-      // Generic error - don't reveal which role was required
-      return (
-        <Err 
-          code={403} 
-          message="Access denied" 
-        />
-      );
-    }
-    
-    props.log.info('Role verified');
-    return;
-  };
-}
-
-/**
- * Optional auth - doesn't fail if no auth, just doesn't add user
- * Silently ignores invalid keys (no rate limiting since optional)
- */
-export const optionalAuth: MiddlewareFunction = async (
-  _props: HandlerProps,
+export const requireAuth = async (
+  props: HandlerProps,
   request: FastifyRequest,
   _reply: FastifyReply
 ) => {
-  const apiKey = request.headers['x-api-key'];
+  const authHeader = request.headers.authorization;
   
-  // Validate format silently
-  if (!isValidApiKeyFormat(apiKey)) {
-    return; // No auth, continue
+  if (!authHeader?.startsWith('Bearer ')) {
+    return (
+      <Response>
+        <Status code={401} />
+        <Body data={{
+          success: false,
+          error: 'UNAUTHORIZED',
+          message: 'Authentication required. Use: Authorization: Bearer <token>',
+          hint: 'Valid tokens: token_admin_123, token_editor_456, token_reader_789',
+        }} />
+      </Response>
+    );
   }
   
-  // Validate key
-  const expectedPrefix = 'pasta-';
-  const keyPrefix = apiKey.slice(0, expectedPrefix.length);
+  const token = authHeader.substring(7);
+  const user = TOKENS.get(token);
   
-  if (!safeCompare(keyPrefix, expectedPrefix)) {
-    return; // Invalid, but optional so continue
+  if (!user) {
+    return (
+      <Response>
+        <Status code={401} />
+        <Body data={{
+          success: false,
+          error: 'INVALID_TOKEN',
+          message: 'Token not recognized',
+          hint: 'Valid tokens: token_admin_123, token_editor_456, token_reader_789',
+        }} />
+      </Response>
+    );
   }
   
-  return (
-    <Augment 
-      user={{
-        id: 'user-1',
-        name: 'Authenticated Chef',
-        authenticatedAt: new Date().toISOString()
-      }} 
-    />
-  );
+  props.log.info({ userId: user.id, role: user.role }, `🔓 Authenticated: ${user.name}`);
+  
+  return { user, isAuthenticated: true };
 };
 
 /**
- * Creates a secure middleware that requires a specific permission
+ * Role-based Access Control Middleware Factory
+ * 
+ * Creates middleware that checks for specific roles.
+ * Must be used AFTER authMiddleware or requireAuth.
  */
-export function requirePermission(permission: string): MiddlewareFunction {
-  return async (props: HandlerProps, _request: FastifyRequest, _reply: FastifyReply) => {
-    const user = props.user as { permissions?: string[] } | undefined;
+export const requireRole = (...allowedRoles: UserRole[]) => {
+  return async (
+    props: HandlerProps,
+    _request: FastifyRequest,
+    _reply: FastifyReply
+  ) => {
+    const user = props.user as AuthUser | undefined;
     
-    if (!user || !user.permissions?.includes(permission)) {
+    if (!user || user.role === 'guest') {
       return (
-        <Err 
-          code={403} 
-          message="Access denied" 
-        />
+        <Response>
+          <Status code={401} />
+          <Body data={{
+            success: false,
+            error: 'NOT_AUTHENTICATED',
+            message: 'Authentication required before role check',
+          }} />
+        </Response>
       );
     }
     
+    if (!allowedRoles.includes(user.role)) {
+      return (
+        <Response>
+          <Status code={403} />
+          <Body data={{
+            success: false,
+            error: 'FORBIDDEN',
+            message: `Role '${user.role}' not allowed. Required: ${allowedRoles.join(' or ')}`,
+          }} />
+        </Response>
+      );
+    }
+    
+    props.log.debug({ userId: user.id, role: user.role, allowedRoles }, '✅ Role check passed');
     return;
   };
-}
+};
+
+/**
+ * Validate token helper (for auth routes)
+ */
+export const validateToken = (token: string): { valid: boolean; user?: AuthUser } => {
+  const user = TOKENS.get(token);
+  return user ? { valid: true, user } : { valid: false };
+};

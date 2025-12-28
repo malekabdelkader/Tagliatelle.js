@@ -31,8 +31,8 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "example": "tsx --tsconfig tsconfig.examples.json examples/main.tsx",
-    "example:dev": "tsx --tsconfig tsconfig.examples.json watch examples/main.tsx"
+    "example": "tsx --tsconfig tsconfig.examples.json examples/server.tsx",
+    "example:dev": "tsx --tsconfig tsconfig.examples.json watch examples/server.tsx"
   },
   "keywords": [
     "fastify",
