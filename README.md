@@ -6,6 +6,10 @@
 
 > **The Declarative Backend Framework.** Build APIs with JSX. Yes, really.
 
+📚 **[Live Documentation](https://malekabdelkader.github.io/Tagliatelle.js/)** | 📦 **[NPM Package](https://www.npmjs.com/package/tagliatelle)**
+
+> ⚠️ **Status:** This is an experimental project. Most features are **not tested** or **partially tested**. Use at your own risk in production. Contributions and bug reports are welcome!
+
 `<Tag>liatelle.js` is a **TypeScript** backend framework built on top of **Fastify** that treats your API architecture like a component tree. Using JSX/TSX, you define your routes, middleware, and responses as a visual hierarchy.
 
 **If you can write React, you can build a high-performance backend.**
@@ -124,17 +128,58 @@ my-api/
 │   ├── _config.tsx         # Global route config
 │   ├── index.tsx           # GET /
 │   ├── health.tsx          # GET /health
+│   ├── auth/               # Auth routes
+│   │   ├── login.tsx       # POST /auth/login
+│   │   ├── register.tsx    # POST /auth/register
+│   │   └── me.tsx          # GET /auth/me
 │   └── posts/
 │       ├── _config.tsx     # Config for /posts/*
-│       ├── _data.ts        # Shared data (not a route)
 │       ├── index.tsx       # GET/POST /posts
 │       └── [id].tsx        # GET/PUT/DELETE /posts/:id
 ├── plugins/                # Custom plugins
 │   └── swagger.tsx         # Swagger integration
+├── databases/              # Database providers
+│   └── contentDB.ts        # Content database
 ├── middleware/
 │   └── auth.tsx            # JSX middleware
 ├── tsconfig.json
 └── package.json
+```
+
+### Examples Folder (This Repo)
+
+The `examples/` folder contains a comprehensive demo showing all features:
+
+```
+examples/
+├── server.tsx              # Multi-database server demo
+├── routes/                 # Complete route examples
+│   ├── auth/               # Authentication routes
+│   ├── posts/              # Content CRUD
+│   ├── categories/         # Categories
+│   ├── tags/               # Tags
+│   ├── search/             # Search
+│   └── pages/              # HTML pages (docs site source)
+├── plugins/                # Plugin examples
+│   ├── swagger.tsx         # OpenAPI documentation
+│   ├── websocket.tsx       # WebSocket support
+│   ├── graphql.tsx         # GraphQL integration
+│   ├── metrics.tsx         # Prometheus metrics
+│   └── redis.tsx           # Redis caching
+├── databases/              # Multi-database setup
+│   ├── authDB.ts           # Auth database
+│   └── contentDB.ts        # Content database
+├── scripts/
+│   └── build-docs.cjs      # Build static docs for GitHub Pages
+└── docs/                   # Generated static site
+    ├── index.html          # Landing page
+    └── docs.html           # Documentation
+```
+
+Run the examples:
+```bash
+npm run example        # Start server
+npm run example:dev    # Start with hot reload
 ```
 
 ---
@@ -795,6 +840,25 @@ Got a new "ingredient"? Open a Pull Request! With the plugin system, you can now
 ## 📜 License
 
 MIT
+
+---
+
+## 🎭 Disclaimer
+
+**This project started as a joke.** And honestly? It still is.
+
+But here's the thing — it actually works. You can build real APIs with it. The JSX compiles, the routes register, the middleware chains, and Fastify does its thing underneath.
+
+Is it production-ready? *Probably.*  
+Is it a good idea? *Debatable.*  
+Is it fun? *Absolutely.*
+
+Think of Tagliatelle.js as that friend who shows up to a formal dinner in a pasta costume — technically dressed, surprisingly functional, and definitely memorable.
+
+**Don't use it for:**
+- 🚀 NASA mission control systems
+- 🏦 Building Banks infra 
+- Semiconductors SOftware
 
 ---
 

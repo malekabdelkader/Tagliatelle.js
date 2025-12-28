@@ -1,6 +1,6 @@
 {
   "name": "tagliatelle",
-  "version": "1.0.0-beta.6",
+  "version": "1.0.0-beta.7",
   "description": "🍝 The Declarative Backend Framework - JSX-powered API architecture on Fastify",
   "type": "module",
   "main": "./dist/index.js",
@@ -32,7 +32,7 @@
     "build": "tsc",
     "prepublishOnly": "npm run build",
     "example": "tsx --tsconfig tsconfig.examples.json examples/server.tsx",
-    "example:dev": "tsx --tsconfig tsconfig.examples.json watch examples/server.tsx"
+    "example:dev": "tsx watch --tsconfig tsconfig.examples.json examples/server.tsx"
   },
   "keywords": [
     "fastify",
