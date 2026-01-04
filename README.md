@@ -8,11 +8,7 @@
 
 📚 **[Live Documentation](https://malekabdelkader.github.io/Tagliatelle.js/)** | 📦 **[NPM Package](https://www.npmjs.com/package/tagliatelle)**
 
-> ⚠️ **Status:** This is an experimental project. Most features are **not tested** or **partially tested**. Use at your own risk in production. Contributions and bug reports are welcome!
-
 `<Tag>liatelle.js` is a **TypeScript** backend framework built on top of **Fastify** that treats your API architecture like a component tree. Using JSX/TSX, you define your routes, middleware, and responses as a visual hierarchy.
-
-**If you can write React, you can build a high-performance backend.**
 
 ```tsx
 import { render, Server, Logger, Cors, Routes } from 'tagliatelle';
@@ -33,33 +29,12 @@ render(<App />);
 
 ---
 
-## 🤔 The Origin Story
-
-This project started as a **joke**.
-
-I noticed that every frontend framework is racing to become more server-oriented. React added Server Components. Next.js gave us `"use server"`. Remix is basically a backend framework wearing a React costume. The JavaScript ecosystem is slowly but surely... **becoming PHP**.
-
-So I thought: *"If frontend devs want to write server code so badly, why not go all the way?"*
-
-Instead of sneaking server code into your React components, let's do the **opposite** — write your entire backend in pure TSX. Routes? JSX. Middleware? JSX. Responses? You guessed it... JSX.
-
-**Tagliatelle.js: Because if we're going to make everything look like PHP anyway, we might as well make it delicious.** 🍝
-
-### Why "Tagliatelle"?
-
-- **`<Tag>`** — Because we write everything in JSX tags. `<Server>`, `<Route>`, `<Response>`... it's tags all the way down.
-- **Tagliatelle** — It's pasta. Because frontend developers clearly want to write spaghetti code in the backend. 🍝
-
-*At least this spaghetti is type-safe and al dente.*
-
----
-
 ## 🚀 Quick Start
 
 ### Create a new project
 
 ```bash
-npx tagliatelle@beta init my-api
+npx tagliatelle init my-api
 cd my-api
 npm run dev
 ```
@@ -88,7 +63,7 @@ curl http://localhost:3000/posts
 | **OpenAPI Schemas** | Export `GET_SCHEMA`, `POST_SCHEMA` for auto-generated docs |
 | **Full TypeScript** | End-to-end type safety with `HandlerProps<TParams, TBody, TQuery>` |
 | **Zero Boilerplate** | Handlers return data or JSX — no `res.send()` needed |
-| **CLI Scaffolding** | `npx tagliatelle@beta init` creates a ready-to-run project |
+| **CLI Scaffolding** | `npx tagliatelle init` creates a ready-to-run project |
 
 ---
 
@@ -97,13 +72,13 @@ curl http://localhost:3000/posts
 ### New Project (Recommended)
 
 ```bash
-npx tagliatelle@beta init my-api
+npx tagliatelle init my-api
 ```
 
 ### Add to Existing Project
 
 ```bash
-npm install tagliatelle@beta
+npm install tagliatelle
 ```
 
 Then configure your `tsconfig.json`:
@@ -768,7 +743,7 @@ Built on Fastify, you get:
 
 ```bash
 # Create a new project
-npx tagliatelle@beta init my-api
+npx tagliatelle init my-api
 
 # Development with hot reload
 npm run dev
@@ -843,22 +818,30 @@ MIT
 
 ---
 
-## 🎭 Disclaimer
+## 🤔 The Origin Story
 
-**This project started as a joke.** And honestly? It still is.
+This project started as a **joke**.
 
-But here's the thing — it actually works. You can build real APIs with it. The JSX compiles, the routes register, the middleware chains, and Fastify does its thing underneath.
+I noticed that every frontend framework is racing to become more server-oriented. React added Server Components. Next.js gave us `"use server"`. Remix is basically a backend framework wearing a React costume. The JavaScript ecosystem is slowly but surely... **becoming PHP**.
 
-Is it production-ready? *Probably.*  
-Is it a good idea? *Debatable.*  
-Is it fun? *Absolutely.*
+So I thought: *"If frontend devs want to write server code so badly, why not go all the way?"*
 
-Think of Tagliatelle.js as that friend who shows up to a formal dinner in a pasta costume — technically dressed, surprisingly functional, and definitely memorable.
+Instead of sneaking server code into your React components, let's do the **opposite** — write your entire backend in pure TSX. Routes? JSX. Middleware? JSX. Responses? You guessed it... JSX.
 
-**Don't use it for:**
-- 🚀 NASA mission control systems
-- 🏦 Building Banks infra 
-- Semiconductors SOftware
+**Tagliatelle.js: Because if we're going to make everything look like PHP anyway, we might as well make it delicious.** 🍝
+
+### Why "Tagliatelle"?
+
+- **`<Tag>`** — Because we write everything in JSX tags. `<Server>`, `<Route>`, `<Response>`... it's tags all the way down.
+- **Tagliatelle** — It's pasta. Because frontend developers clearly want to write spaghetti code in the backend. 🍝
+
+*At least this spaghetti is type-safe and al dente.*
+
+---
+
+## 🎭 Note
+
+This project works and you can build real APIs with it. The JSX compiles, the routes register, the middleware chains, and Fastify does its thing underneath. That said, use your judgment for critical systems.
 
 ---
 

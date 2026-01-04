@@ -5,7 +5,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📚 Documentation - Tagliatelle.js</title>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <meta name="description" content="Complete documentation for Tagliatelle.js - the declarative backend framework.">
+  <link rel="canonical" href="https://malekabdelkader.github.io/Tagliatelle.js/docs.html">
+  
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-S2CWXP1642"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-S2CWXP1642');
+  </script>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #0c0c14;
@@ -26,7 +38,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
-      font-family: 'Outfit', sans-serif;
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
       background: var(--bg-dark);
       color: var(--text-primary);
       line-height: 1.7;
@@ -162,7 +174,7 @@
     }
     
     code {
-      font-family: 'Fira Code', monospace;
+      font-family: 'JetBrains Mono', monospace;
       background: var(--bg-code);
       padding: 3px 8px;
       border-radius: 4px;
@@ -189,7 +201,7 @@
     }
     
     .code-filename {
-      font-family: 'Fira Code', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.85rem;
       color: var(--text-muted);
     }
@@ -206,7 +218,7 @@
     
     .code-body {
       padding: 20px;
-      font-family: 'Fira Code', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.85rem;
       line-height: 1.7;
       overflow-x: auto;
@@ -299,21 +311,247 @@
     
     .response-body {
       padding: 18px;
-      font-family: 'Fira Code', monospace;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 0.85rem;
       white-space: pre;
       color: var(--text-secondary);
     }
     
+    /* Mobile Header */
+    .mobile-header {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 20px;
+      background: rgba(12, 12, 20, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .mobile-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+    
+    .mobile-logo span { font-size: 1.4rem; }
+    
+    .menu-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .menu-btn:hover {
+      border-color: var(--accent-pasta);
+      background: var(--bg-sidebar);
+    }
+    
+    /* Mobile Menu Overlay */
+    .mobile-menu-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    
+    .mobile-menu-overlay.active {
+      opacity: 1;
+    }
+    
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      right: -300px;
+      width: 280px;
+      height: 100vh;
+      background: var(--bg-sidebar);
+      z-index: 201;
+      padding: 24px;
+      overflow-y: auto;
+      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 1px solid var(--border-color);
+    }
+    
+    .mobile-menu.active {
+      right: 0;
+    }
+    
+    .mobile-menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .mobile-menu-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+    
+    .close-btn:hover {
+      color: var(--text-primary);
+    }
+    
+    .mobile-nav-section {
+      margin-bottom: 24px;
+    }
+    
+    .mobile-nav-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    
+    .mobile-nav-link {
+      display: block;
+      padding: 10px 0;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: color 0.2s;
+    }
+    
+    .mobile-nav-link:hover,
+    .mobile-nav-link:active {
+      color: var(--accent-pasta);
+    }
+    
+    .mobile-nav-link:last-child {
+      border-bottom: none;
+    }
+
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { display: none; }
-      .main { padding: 30px 20px; }
+      .main { padding: 80px 20px 30px; }
       h1 { font-size: 2rem; }
+      .mobile-header { display: flex; }
+      .mobile-menu-overlay { display: block; pointer-events: none; }
+      .mobile-menu-overlay.active { pointer-events: auto; }
     }
   </style>
 </head>
 <body>
+  <!-- Mobile Header -->
+  <header class="mobile-header">
+    <a href="./index.html" class="mobile-logo">
+      <span>🍝</span> Docs
+    </a>
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+  </header>
+  
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+  
+  <!-- Mobile Menu -->
+  <nav class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+      <span class="mobile-menu-title">Navigation</span>
+      <button class="close-btn" onclick="closeMenu()">✕</button>
+    </div>
+    
+    <div class="mobile-nav-section">
+      <div class="mobile-nav-title">Getting Started</div>
+      <a href="#overview" class="mobile-nav-link" onclick="closeMenu()">Overview</a>
+      <a href="#architecture" class="mobile-nav-link" onclick="closeMenu()">Component Tree</a>
+    </div>
+    
+    <div class="mobile-nav-section">
+      <div class="mobile-nav-title">Server Components</div>
+      <a href="#server" class="mobile-nav-link" onclick="closeMenu()">&lt;Server&gt;</a>
+      <a href="#routes" class="mobile-nav-link" onclick="closeMenu()">&lt;Routes&gt;</a>
+      <a href="#cors" class="mobile-nav-link" onclick="closeMenu()">&lt;Cors&gt;</a>
+      <a href="#logger" class="mobile-nav-link" onclick="closeMenu()">&lt;Logger&gt;</a>
+      <a href="#ratelimiter" class="mobile-nav-link" onclick="closeMenu()">&lt;RateLimiter&gt;</a>
+      <a href="#db" class="mobile-nav-link" onclick="closeMenu()">&lt;DB&gt;</a>
+      <a href="#middleware-comp" class="mobile-nav-link" onclick="closeMenu()">&lt;Middleware&gt;</a>
+      <a href="#group" class="mobile-nav-link" onclick="closeMenu()">&lt;Group&gt;</a>
+    </div>
+    
+    <div class="mobile-nav-section">
+      <div class="mobile-nav-title">Response Components</div>
+      <a href="#response" class="mobile-nav-link" onclick="closeMenu()">&lt;Response&gt;</a>
+      <a href="#status" class="mobile-nav-link" onclick="closeMenu()">&lt;Status&gt;</a>
+      <a href="#headers" class="mobile-nav-link" onclick="closeMenu()">&lt;Headers&gt;</a>
+      <a href="#body" class="mobile-nav-link" onclick="closeMenu()">&lt;Body&gt;</a>
+    </div>
+    
+    <div class="mobile-nav-section">
+      <div class="mobile-nav-title">Advanced Patterns</div>
+      <a href="#props-flow" class="mobile-nav-link" onclick="closeMenu()">Props Chaining</a>
+      <a href="#tree-handling" class="mobile-nav-link" onclick="closeMenu()">Tree Nesting</a>
+      <a href="#config" class="mobile-nav-link" onclick="closeMenu()">Config Files</a>
+      <a href="#handlers" class="mobile-nav-link" onclick="closeMenu()">Route Handlers</a>
+      <a href="#auth" class="mobile-nav-link" onclick="closeMenu()">Authentication</a>
+      <a href="#custom" class="mobile-nav-link" onclick="closeMenu()">Custom Components</a>
+      <a href="#plugins" class="mobile-nav-link" onclick="closeMenu()" style="color: var(--accent-basil);">🔌 createPlugin</a>
+    </div>
+    
+    <div class="mobile-nav-section">
+      <div class="mobile-nav-title">Plugins</div>
+      <a href="#plugins" class="mobile-nav-link" onclick="closeMenu()">&lt;Swagger&gt;</a>
+      <a href="#plugins" class="mobile-nav-link" onclick="closeMenu()">&lt;WS&gt;</a>
+      <a href="#plugins" class="mobile-nav-link" onclick="closeMenu()">&lt;GraphQL&gt;</a>
+      <a href="#plugins" class="mobile-nav-link" onclick="closeMenu()">&lt;Metrics&gt;</a>
+      <a href="#plugins" class="mobile-nav-link" onclick="closeMenu()">&lt;Redis&gt;</a>
+    </div>
+    
+    <div class="mobile-nav-section" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+      <a href="./index.html" class="mobile-nav-link">← Back to Home</a>
+    </div>
+  </nav>
+  
+  <script>
+    function toggleMenu() {
+      document.getElementById('mobileMenu').classList.toggle('active');
+      document.getElementById('menuOverlay').classList.toggle('active');
+      document.body.style.overflow = document.getElementById('mobileMenu').classList.contains('active') ? 'hidden' : '';
+    }
+    
+    function closeMenu() {
+      document.getElementById('mobileMenu').classList.remove('active');
+      document.getElementById('menuOverlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  </script>
+
   <div class="layout">
     <aside class="sidebar">
       <a href="./index.html" class="sidebar-logo">
