@@ -1,6 +1,6 @@
 {
   "name": "tagliatelle",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "🍝 The Declarative Backend Framework - JSX-powered API architecture on Fastify",
   "type": "module",
   "main": "./dist/index.js",
