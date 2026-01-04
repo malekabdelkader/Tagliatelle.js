@@ -63,6 +63,7 @@ import {
   COMPONENT_TYPES,
   Handler,
   MiddlewareFunction,
+  ScopedMiddleware,
   ServerProps,
   RouteProps,
   MiddlewareProps,
@@ -81,6 +82,7 @@ import {
   ErrProps,
   RouteConfig,
   cloneConfig,
+  createScopedMiddleware,
 } from './types.js';
 import { registerRoutes } from './router.js';
 
@@ -572,10 +574,21 @@ function resolveElement(element: TagliatelleNode): TagliatelleComponent | Taglia
 
 /**
  * Wraps a user handler to work with Fastify's request/reply system
+ * 
+ * IMPORTANT: Each middleware uses its CAPTURED config (db, etc.) from when it was defined.
+ * This ensures visual hierarchy in JSX is respected:
+ * 
+ * <DB provider={db1}>
+ *   <Middleware use={mw1} />  ← mw1 sees db1
+ *   <DB provider={db2}>
+ *     <Middleware use={mw2} />  ← mw2 sees db2
+ *     <Route />  ← handler sees db2
+ *   </DB>
+ * </DB>
  */
 function wrapHandler(
   handler: Handler,
-  middlewares: MiddlewareFunction[],
+  scopedMiddlewares: ScopedMiddleware[],
   config: RouteConfig
 ) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
@@ -592,7 +605,7 @@ function wrapHandler(
       debug: () => {},
     };
     
-    // Build props from request
+    // Build base props from request - handler gets the FINAL config
     const props: HandlerProps = {
       params: request.params as Record<string, string>,
       query: request.query as Record<string, string>,
@@ -608,11 +621,29 @@ function wrapHandler(
     const MIDDLEWARE_TIMEOUT = 30000;
     
     // Execute middleware chain
-    for (const mw of middlewares) {
+    // Each middleware gets its OWN captured config from when it was DEFINED in the JSX tree
+    // This ensures visual hierarchy is respected:
+    //   <DB provider={db1}>
+    //     <Middleware use={mw1} />  ← mw1 sees db1
+    //     <DB provider={db2}>
+    //       <Middleware use={mw2} />  ← mw2 sees db2
+    //     </DB>
+    //   </DB>
+    for (const scopedMw of scopedMiddlewares) {
       try {
+        // Build middleware-specific props using the CAPTURED config (from definition time)
+        const capturedConfig = scopedMw.capturedConfig;
+        const middlewareProps: HandlerProps = {
+          ...props,
+          // Use captured db from when this middleware was defined in the tree
+          db: capturedConfig.db,
+          // Full captured config accessible if middleware needs other context values
+          __capturedConfig: capturedConfig,
+        };
+        
         // Wrap middleware in timeout to prevent hanging
         const result = await withTimeout(
-          async () => mw(props, request, reply),
+          async () => scopedMw.fn(middlewareProps, request, reply),
           MIDDLEWARE_TIMEOUT,
           'Middleware timeout'
         );
@@ -621,6 +652,7 @@ function wrapHandler(
           return; // Middleware halted the chain
         }
         // Middleware can augment props - use safeMerge to prevent prototype pollution
+        // Augmentations are passed to subsequent middlewares AND the handler
         if (result && typeof result === 'object') {
           safeMerge(props, result);
         }
@@ -772,9 +804,12 @@ async function processTree(
       break;
 
     case COMPONENT_TYPES.MIDDLEWARE:
-      // Clone config with added middleware
+      // Clone config with added scoped middleware
+      // The middleware captures the CURRENT config (db, etc.) at definition time
+      // This ensures visual hierarchy is respected in JSX
+      const scopedMw = createScopedMiddleware(component.use as MiddlewareFunction, config);
       const middlewareConfig = cloneConfig(config, { 
-        middleware: [...config.middleware, component.use as MiddlewareFunction] 
+        middleware: [...config.middleware, scopedMw] 
       });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {

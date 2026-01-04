@@ -111,6 +111,27 @@ export type MiddlewareFunction = (
   reply: FastifyReply
 ) => MiddlewareResult;
 
+/**
+ * Scoped middleware - captures the FULL config at definition time
+ * This ensures visual hierarchy is respected for ALL context:
+ * 
+ * <DB provider={db1}>
+ *   <Logger level="debug">
+ *     <Middleware use={mw1} />  ← mw1 sees db1, logLevel="debug"
+ *   </Logger>
+ *   <DB provider={db2}>
+ *     <Logger level="info">
+ *       <Middleware use={mw2} />  ← mw2 sees db2, logLevel="info"
+ *     </Logger>
+ *   </DB>
+ * </DB>
+ */
+export interface ScopedMiddleware {
+  fn: MiddlewareFunction;
+  /** Full config snapshot captured at the point where this middleware was defined */
+  capturedConfig: RouteConfig;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 📦 COMPONENT PROP TYPES
 // ═══════════════════════════════════════════════════════════════════════════
@@ -130,7 +151,11 @@ export interface CorsConfig {
 
 export interface RouteConfig {
   // Config properties (inherited & overridable)
-  middleware: MiddlewareFunction[];
+  /** 
+   * Scoped middlewares - each middleware captures its config at definition time
+   * This ensures visual hierarchy is respected in the JSX tree
+   */
+  middleware: ScopedMiddleware[];
   prefix: string;
   rateLimit?: { max: number; timeWindow: string };
   cors?: CorsConfig;
@@ -163,8 +188,28 @@ export function cloneConfig(config: RouteConfig, overrides: Partial<RouteConfig>
   
   return {
     ...config,
+    // Deep copy middleware array to prevent mutation
     middleware: safeOverrides.middleware ? [...safeOverrides.middleware] : [...config.middleware],
     ...safeOverrides
+  };
+}
+
+/**
+ * Create a scoped middleware that captures the FULL current config
+ * This creates a snapshot of all context at definition time
+ */
+export function createScopedMiddleware(fn: MiddlewareFunction, config: RouteConfig): ScopedMiddleware {
+  // Deep clone the config to capture a snapshot
+  // We exclude the middleware array to avoid circular references
+  const { middleware, ...configSnapshot } = config;
+  
+  return {
+    fn,
+    capturedConfig: {
+      ...configSnapshot,
+      middleware: [], // Don't include middleware array (would be circular)
+      prefix: config.prefix,
+    } as RouteConfig
   };
 }
 

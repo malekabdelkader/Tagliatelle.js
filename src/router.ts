@@ -16,8 +16,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import type { Handler, MiddlewareFunction, HandlerProps, CorsConfig, RouteConfig } from './types.js';
-import { COMPONENT_TYPES, cloneConfig } from './types.js';
+import type { Handler, MiddlewareFunction, ScopedMiddleware, HandlerProps, CorsConfig, RouteConfig } from './types.js';
+import { COMPONENT_TYPES, cloneConfig, createScopedMiddleware } from './types.js';
 import type { TagliatelleComponent, TagliatelleNode, TagliatelleElement } from './types.js';
 import { safeMerge, sanitizeErrorMessage, withTimeout } from './security.js';
 import { Fragment } from './jsx-runtime.js';
@@ -60,7 +60,7 @@ const methodColor = (method: string): string => {
 export type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS';
 
 export interface ParsedConfig {
-  middleware: MiddlewareFunction[];
+  middleware: ScopedMiddleware[];
   cors?: boolean | CorsConfig;
   rateLimit?: { max: number; timeWindow: string };
   logLevel?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent';
@@ -213,10 +213,12 @@ async function processConfigTree(
         break;
 
       case COMPONENT_TYPES.MIDDLEWARE:
-        // Clone config with added middleware
+        // Clone config with added scoped middleware
+        // Middleware captures CURRENT config (db, etc.) at definition time
         if (component.use) {
+          const scopedMw = createScopedMiddleware(component.use as MiddlewareFunction, config);
           const middlewareConfig = cloneConfig(config, {
-            middleware: [...config.middleware, component.use as MiddlewareFunction]
+            middleware: [...config.middleware, scopedMw]
           });
           if (component.children) {
             for (const child of component.children as TagliatelleNode[]) {
@@ -328,13 +330,16 @@ async function registerRouteFromModule(
   // Build final URL path
   const finalUrlPath = basePrefix + config.prefix + urlPath;
   
-  // Collect all middleware
-  const allMiddleware = [...config.middleware];
+  // Collect all middleware (already scoped from config tree)
+  const allMiddleware: ScopedMiddleware[] = [...config.middleware];
   
-  // Add route-level middleware
+  // Add route-level middleware (scope it with current config)
   if (module.middleware) {
-    const routeMw = Array.isArray(module.middleware) ? module.middleware : [module.middleware];
-    allMiddleware.push(...routeMw);
+    const routeMwFns = Array.isArray(module.middleware) ? module.middleware : [module.middleware];
+    // Route-level middleware captures the FINAL config (as expected for route files)
+    for (const mwFn of routeMwFns) {
+      allMiddleware.push(createScopedMiddleware(mwFn, config));
+    }
   }
   
   for (const method of httpMethods) {
@@ -527,9 +532,15 @@ interface PrettyLog {
   debug: (msg: string) => void;
 }
 
+/**
+ * Wraps route handler with scoped middleware support
+ * 
+ * Each middleware uses its CAPTURED config (db, etc.) from when it was defined.
+ * This ensures visual hierarchy in JSX is respected.
+ */
 function wrapRouteHandler(
   handler: Handler,
-  middlewares: MiddlewareFunction[],
+  scopedMiddlewares: ScopedMiddleware[],
   config: RouteConfig
 ) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
@@ -541,6 +552,7 @@ function wrapRouteHandler(
       debug: () => {},
     };
     
+    // Base props - handler gets the FINAL config
     const props: HandlerProps = {
       params: request.params as Record<string, string>,
       query: request.query as Record<string, string>,
@@ -555,11 +567,29 @@ function wrapRouteHandler(
     // Middleware timeout (30 seconds max)
     const MIDDLEWARE_TIMEOUT = 30000;
     
-    for (const mw of middlewares) {
+    // Execute each scoped middleware with its CAPTURED config (from definition time in JSX tree)
+    // This ensures visual hierarchy is respected:
+    //   <DB provider={db1}>
+    //     <Middleware use={mw1} />  ← mw1 sees db1
+    //     <DB provider={db2}>
+    //       <Middleware use={mw2} />  ← mw2 sees db2
+    //     </DB>
+    //   </DB>
+    for (const scopedMw of scopedMiddlewares) {
       try {
+        // Build middleware-specific props using the CAPTURED config (from definition time)
+        const capturedConfig = scopedMw.capturedConfig;
+        const middlewareProps: HandlerProps = {
+          ...props,
+          // Use captured db from when this middleware was defined in the tree
+          db: capturedConfig.db,
+          // Full captured config accessible if middleware needs other context values
+          __capturedConfig: capturedConfig,
+        };
+        
         // Wrap middleware in timeout to prevent hanging
         const result = await withTimeout(
-          async () => mw(props, request, reply),
+          async () => scopedMw.fn(middlewareProps, request, reply),
           MIDDLEWARE_TIMEOUT,
           'Middleware timeout'
         );
@@ -582,6 +612,7 @@ function wrapRouteHandler(
           
           if (resolved.augment) {
             // Use safeMerge to prevent prototype pollution
+            // Augmentations are passed to subsequent middlewares AND the handler
             safeMerge(props, resolved.augment);
           }
         }
