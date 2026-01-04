@@ -1,10 +1,18 @@
-# 🍝 `<Tag>liatelle.js`
+<p align="center">
+  <img src="https://malekabdelkader.github.io/Tagliatelle.js/Logo-tr.png" alt="Tagliatelle.js" width="120">
+</p>
 
-[![npm version](https://img.shields.io/npm/v/tagliatelle.svg)](https://www.npmjs.com/package/tagliatelle)
-[![npm downloads](https://img.shields.io/npm/dm/tagliatelle.svg)](https://www.npmjs.com/package/tagliatelle)
-[![license](https://img.shields.io/npm/l/tagliatelle.svg)](https://github.com/malekabdelkader/Tagliatelle.js/blob/main/LICENSE)
+<h1 align="center">Tagliatelle.js</h1>
 
-> **The Declarative Backend Framework.** Build APIs with JSX. Yes, really.
+<p align="center">
+  <a href="https://www.npmjs.com/package/tagliatelle"><img src="https://img.shields.io/npm/v/tagliatelle.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/tagliatelle"><img src="https://img.shields.io/npm/dm/tagliatelle.svg" alt="npm downloads"></a>
+  <a href="https://github.com/malekabdelkader/Tagliatelle.js/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/tagliatelle.svg" alt="license"></a>
+</p>
+
+<p align="center">
+  <strong>The Declarative Backend Framework.</strong> Build APIs with JSX. Yes, really.
+</p>
 
 📚 **[Live Documentation](https://malekabdelkader.github.io/Tagliatelle.js/)** | 📦 **[NPM Package](https://www.npmjs.com/package/tagliatelle)**
 

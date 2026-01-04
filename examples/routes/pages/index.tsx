@@ -17,9 +17,12 @@ const landingHTML = `
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🍝 Tagliatelle.js - The Declarative Backend Framework</title>
+  <title>Tagliatelle.js - The Declarative Backend Framework</title>
+  <link rel="icon" type="image/png" href="./Logo-tr.png">
+  <link rel="apple-touch-icon" href="./Logo-tr.png">
   <meta name="description" content="Build backend APIs with JSX. Type-safe, declarative, and delicious.">
   <meta name="keywords" content="typescript, jsx, backend, framework, fastify, api, nodejs">
+  <meta property="og:image" content="https://malekabdelkader.github.io/Tagliatelle.js/Logo-tr.png">
   <meta property="og:title" content="Tagliatelle.js - JSX for the Backend">
   <meta property="og:description" content="Build backend APIs with JSX. The declarative backend framework.">
   <meta property="og:type" content="website">
@@ -87,14 +90,18 @@ const landingHTML = `
     .nav-logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       font-size: 1.3rem;
       font-weight: 700;
       color: var(--text-primary);
       text-decoration: none;
     }
     
-    .nav-logo span { font-size: 1.6rem; }
+    .nav-logo-img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
     
     .nav-links {
       display: flex;
@@ -157,10 +164,12 @@ const landingHTML = `
     }
     
     .logo-icon {
-      font-size: 5rem;
-      margin-bottom: 24px;
-      display: inline-block;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto 40px auto;
+      display: block;
       animation: float 4s ease-in-out infinite;
+      object-fit: contain;
     }
     
     @keyframes float {
@@ -642,7 +651,7 @@ const landingHTML = `
 <body>
   <nav>
     <a href="./" class="nav-logo">
-      <span>🍝</span> Tagliatelle.js
+      <img src="./Logo-tr.png" alt="Tagliatelle.js" class="nav-logo-img"> Tagliatelle.js
     </a>
     <div class="nav-links">
       <a href="./docs.html">Documentation</a>
@@ -653,7 +662,7 @@ const landingHTML = `
 
   <section class="hero">
     <div class="hero-content">
-      <div class="logo-icon">🍝</div>
+      <img src="./Logo-tr.png" alt="Tagliatelle.js" class="logo-icon">
       <h1>Tagliatelle.js</h1>
       <p class="tagline">
         The <strong>Declarative Backend Framework</strong>.<br>
@@ -932,7 +941,7 @@ routes/
   </section>
   
   <section class="cta-section">
-    <h2>Ready to cook? 🍝</h2>
+    <h2>Ready to cook?</h2>
     <p>Get started in under a minute. Zero config, full TypeScript.</p>
     <div class="cta-row">
       <a href="./docs.html" class="cta-btn primary">Read the Docs →</a>
@@ -941,7 +950,7 @@ routes/
   </section>
   
   <footer>
-    <p>🍝 Built with Tagliatelle.js v1.0.0</p>
+    <p><img src="./Logo-tr.png" alt="" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">Built with Tagliatelle.js v1.0.0</p>
     <div class="footer-links">
       <a href="./docs.html">Documentation</a>
       <a href="https://www.npmjs.com/package/tagliatelle">NPM Package</a>

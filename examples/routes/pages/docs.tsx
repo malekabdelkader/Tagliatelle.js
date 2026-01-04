@@ -18,7 +18,10 @@ const docsHTML = `
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📚 Documentation - Tagliatelle.js</title>
+  <link rel="icon" type="image/png" href="./Logo-tr.png">
+  <link rel="apple-touch-icon" href="./Logo-tr.png">
   <meta name="description" content="Complete documentation for Tagliatelle.js - the declarative backend framework.">
+  <meta property="og:image" content="https://malekabdelkader.github.io/Tagliatelle.js/Logo-tr.png">
   <link rel="canonical" href="https://malekabdelkader.github.io/Tagliatelle.js/docs.html">
   
   <!-- Google Analytics -->
@@ -77,7 +80,7 @@ const docsHTML = `
     .sidebar-logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       font-size: 1.4rem;
       font-weight: 700;
       margin-bottom: 40px;
@@ -85,7 +88,11 @@ const docsHTML = `
       text-decoration: none;
     }
     
-    .sidebar-logo span { font-size: 1.8rem; }
+    .sidebar-logo-img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
     
     .nav-section {
       margin-bottom: 32px;
@@ -349,14 +356,18 @@ const docsHTML = `
     .mobile-logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       font-size: 1.2rem;
       font-weight: 700;
       color: var(--text-primary);
       text-decoration: none;
     }
     
-    .mobile-logo span { font-size: 1.4rem; }
+    .mobile-logo-img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+    }
     
     .menu-btn {
       background: var(--bg-card);
@@ -485,7 +496,7 @@ const docsHTML = `
   <!-- Mobile Header -->
   <header class="mobile-header">
     <a href="./index.html" class="mobile-logo">
-      <span>🍝</span> Docs
+      <img src="./Logo-tr.png" alt="" class="mobile-logo-img"> Docs
     </a>
     <button class="menu-btn" onclick="toggleMenu()">☰</button>
   </header>
@@ -568,7 +579,7 @@ const docsHTML = `
   <div class="layout">
     <aside class="sidebar">
       <a href="./index.html" class="sidebar-logo">
-        <span>🍝</span> Docs
+        <img src="./Logo-tr.png" alt="" class="sidebar-logo-img"> Docs
       </a>
       
       <nav class="nav-section">
