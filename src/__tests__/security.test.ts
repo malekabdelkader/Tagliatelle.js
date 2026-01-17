@@ -356,7 +356,9 @@ describe('AuthFailureTracker', () => {
 
     expect(tracker.isBlocked('192.168.1.1')).toBe(true);
 
-    vi.advanceTimersByTime(4000);
+    // After max failures, firstFailure is set to: now - windowMs + blockDurationMs
+    // So we need to wait more than windowMs + blockDurationMs from that adjusted time
+    vi.advanceTimersByTime(4001);
     tracker.cleanup();
 
     expect(tracker.isBlocked('192.168.1.1')).toBe(false);
@@ -374,7 +376,10 @@ describe('AuthFailureTracker', () => {
 
     expect(tracker.isBlocked('192.168.1.1')).toBe(true);
 
-    vi.advanceTimersByTime(3500);
+    // After max failures, firstFailure is adjusted forward by blockDurationMs - windowMs
+    // isBlocked returns false when: now - firstFailure > windowMs + blockDurationMs
+    // Need to wait > windowMs + blockDurationMs from the adjusted firstFailure time
+    vi.advanceTimersByTime(4001);
 
     expect(tracker.isBlocked('192.168.1.1')).toBe(false);
   });
