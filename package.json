@@ -1,7 +1,7 @@
 {
   "name": "tagliatelle",
   "version": "1.0.1",
-  "description": "🍝 The Declarative Backend Framework - JSX-powered API architecture on Fastify",
+  "description": "The Declarative Backend Framework - JSX-powered API architecture on Fastify",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -30,9 +30,16 @@
   ],
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build",
     "example": "tsx --tsconfig tsconfig.examples.json examples/server.tsx",
-    "example:dev": "tsx watch --tsconfig tsconfig.examples.json examples/server.tsx"
+    "example:dev": "tsx watch --tsconfig tsconfig.examples.json examples/server.tsx",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write src",
+    "format:check": "prettier --check src"
   },
   "keywords": [
     "fastify",
@@ -65,12 +72,20 @@
     "fastify": "^4.24.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@fastify/swagger": "^8.15.0",
     "@fastify/swagger-ui": "^4.2.0",
     "@fastify/websocket": "^8.3.1",
     "@types/node": "^20.10.0",
+    "@vitest/coverage-v8": "^4.0.17",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.0",
     "tsx": "^4.6.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.53.0",
+    "vitest": "^4.0.17"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0"
