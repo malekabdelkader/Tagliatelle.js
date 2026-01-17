@@ -14,14 +14,14 @@ export interface TagliatelleElement {
   children: TagliatelleNode[];
 }
 
-export type TagliatelleNode = 
-  | TagliatelleElement 
-  | TagliatelleComponent 
-  | string 
-  | number 
-  | boolean 
-  | null 
-  | undefined 
+export type TagliatelleNode =
+  | TagliatelleElement
+  | TagliatelleComponent
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
   | TagliatelleNode[];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -57,7 +57,7 @@ export const COMPONENT_TYPES = {
   ERR: Symbol('Err'),
 } as const;
 
-export type ComponentType = typeof COMPONENT_TYPES[keyof typeof COMPONENT_TYPES];
+export type ComponentType = (typeof COMPONENT_TYPES)[keyof typeof COMPONENT_TYPES];
 
 export interface TagliatelleComponent {
   __tagliatelle: ComponentType;
@@ -72,7 +72,7 @@ export interface TagliatelleComponent {
 export interface HandlerProps<
   TParams = Record<string, string>,
   TBody = unknown,
-  TQuery = Record<string, string>
+  TQuery = Record<string, string>,
 > {
   params: TParams;
   query: TQuery;
@@ -90,18 +90,18 @@ export type Handler<
   TParams = Record<string, string>,
   TBody = unknown,
   TQuery = Record<string, string>,
-  TResponse = unknown
+  TResponse = unknown,
 > = (props: HandlerProps<TParams, TBody, TQuery>) => TResponse | Promise<TResponse>;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🌶️ MIDDLEWARE TYPES
 // ═══════════════════════════════════════════════════════════════════════════
 
-export type MiddlewareResult = 
-  | void 
-  | false 
-  | Record<string, unknown> 
-  | TagliatelleComponent 
+export type MiddlewareResult =
+  | void
+  | false
+  | Record<string, unknown>
+  | TagliatelleComponent
   | TagliatelleElement
   | Promise<void | false | Record<string, unknown> | TagliatelleComponent | TagliatelleElement>;
 
@@ -114,7 +114,7 @@ export type MiddlewareFunction = (
 /**
  * Scoped middleware - captures the FULL config at definition time
  * This ensures visual hierarchy is respected for ALL context:
- * 
+ *
  * <DB provider={db1}>
  *   <Logger level="debug">
  *     <Middleware use={mw1} />  ← mw1 sees db1, logLevel="debug"
@@ -151,7 +151,7 @@ export interface CorsConfig {
 
 export interface RouteConfig {
   // Config properties (inherited & overridable)
-  /** 
+  /**
    * Scoped middlewares - each middleware captures its config at definition time
    * This ensures visual hierarchy is respected in the JSX tree
    */
@@ -160,10 +160,10 @@ export interface RouteConfig {
   rateLimit?: { max: number; timeWindow: string };
   cors?: CorsConfig;
   logLevel?: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal' | 'silent';
-  
+
   // Services (shared, can be overridden by _config with DB)
   db?: unknown;
-  
+
   // Internal
   [key: string]: unknown;
 }
@@ -177,7 +177,10 @@ const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype'];
  * Clone a RouteConfig and override with new values
  * Includes prototype pollution prevention for defense in depth
  */
-export function cloneConfig(config: RouteConfig, overrides: Partial<RouteConfig> = {}): RouteConfig {
+export function cloneConfig(
+  config: RouteConfig,
+  overrides: Partial<RouteConfig> = {}
+): RouteConfig {
   // Filter out dangerous keys from overrides (defense in depth)
   const safeOverrides: Partial<RouteConfig> = {};
   for (const key of Object.keys(overrides)) {
@@ -185,12 +188,12 @@ export function cloneConfig(config: RouteConfig, overrides: Partial<RouteConfig>
       safeOverrides[key] = overrides[key];
     }
   }
-  
+
   return {
     ...config,
     // Deep copy middleware array to prevent mutation
     middleware: safeOverrides.middleware ? [...safeOverrides.middleware] : [...config.middleware],
-    ...safeOverrides
+    ...safeOverrides,
   };
 }
 
@@ -198,18 +201,21 @@ export function cloneConfig(config: RouteConfig, overrides: Partial<RouteConfig>
  * Create a scoped middleware that captures the FULL current config
  * This creates a snapshot of all context at definition time
  */
-export function createScopedMiddleware(fn: MiddlewareFunction, config: RouteConfig): ScopedMiddleware {
+export function createScopedMiddleware(
+  fn: MiddlewareFunction,
+  config: RouteConfig
+): ScopedMiddleware {
   // Deep clone the config to capture a snapshot
   // We exclude the middleware array to avoid circular references
   const { middleware, ...configSnapshot } = config;
-  
+
   return {
     fn,
     capturedConfig: {
       ...configSnapshot,
       middleware: [], // Don't include middleware array (would be circular)
       prefix: config.prefix,
-    } as RouteConfig
+    } as RouteConfig,
   };
 }
 
@@ -224,7 +230,7 @@ export interface RouteProps<
   TParams = Record<string, string>,
   TBody = unknown,
   TQuery = Record<string, string>,
-  TResponse = unknown
+  TResponse = unknown,
 > {
   path: string;
   handler: Handler<TParams, TBody, TQuery, TResponse>;
@@ -351,19 +357,18 @@ declare global {
   namespace JSX {
     // Components can return TagliatelleComponent or TagliatelleElement
     type Element = TagliatelleComponent | TagliatelleElement;
-    
+
     interface ElementChildrenAttribute {
       children: {};
     }
-    
+
     // Allow component functions to return our types
     interface ElementClass {
       render(): Element;
     }
-    
+
     interface IntrinsicAttributes {
       key?: string | number;
     }
   }
 }
-
