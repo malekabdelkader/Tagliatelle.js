@@ -127,7 +127,6 @@ export function isNonEmptyString(value: unknown): value is string {
 export function isSafeString(value: unknown): value is string {
   if (typeof value !== 'string') return false;
   if (value.includes('\0')) return false;
-  // eslint-disable-next-line no-control-regex
   if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(value)) return false;
   return true;
 }

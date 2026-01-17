@@ -207,7 +207,7 @@ export function createScopedMiddleware(
 ): ScopedMiddleware {
   // Deep clone the config to capture a snapshot
   // We exclude the middleware array to avoid circular references
-  const { middleware, ...configSnapshot } = config;
+  const { middleware: _middleware, ...configSnapshot } = config;
 
   return {
     fn,

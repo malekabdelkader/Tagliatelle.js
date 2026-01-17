@@ -295,7 +295,7 @@ async function processConfigTree(
             const db = await provider();
             dbConfig = cloneConfig(config, { db });
             console.log(`  ${c.green}✓${c.reset} DB connected (config override)`);
-          } catch (error) {
+          } catch {
             console.error(`  ${c.red}✗${c.reset} DB initialization failed in config`);
           }
         }
@@ -464,9 +464,9 @@ async function scanDirectory(dir: string, routesDir: string): Promise<ScanResult
         }
       }
     }
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException;
-    if (err.code !== 'ENOENT') throw error;
+  } catch (_error) {
+    const err = _error as NodeJS.ErrnoException;
+    if (err.code !== 'ENOENT') throw _error;
   }
 
   return result;
@@ -635,8 +635,8 @@ function wrapRouteHandler(
             safeMerge(props, resolved.augment);
           }
         }
-      } catch (error) {
-        const err = error as Error & { statusCode?: number };
+      } catch (_error) {
+        const err = _error as Error & { statusCode?: number };
         // Sanitize error message to prevent info leakage
         reply.status(err.statusCode ?? 500).send({
           error: sanitizeErrorMessage(err, 'Middleware error'),
@@ -660,9 +660,9 @@ function wrapRouteHandler(
           reply.send(result);
         }
       }
-    } catch (error) {
+    } catch (_error) {
       if (!reply.sent) {
-        const err = error as Error & { statusCode?: number };
+        const err = _error as Error & { statusCode?: number };
         // Sanitize error to prevent stack trace and info leakage
         reply.status(err.statusCode ?? 500).send({
           error: sanitizeErrorMessage(err, 'Internal server error'),
@@ -783,7 +783,7 @@ async function buildDirectoryTree(
     try {
       const configModule = await loadModule<{ default: ConfigFunction }>(configPath);
       tree.config = configModule.default;
-    } catch (error) {
+    } catch {
       console.error(`  ${c.red}✗${c.reset} Config error: ${path.relative(routesDir, configPath)}`);
     }
   }
@@ -798,7 +798,7 @@ async function buildDirectoryTree(
         const module = await loadModule<RouteModule>(filePath);
         const urlPath = filePathToUrlPath(filePath, routesDir);
         tree.routes.push({ filePath, urlPath, module });
-      } catch (error) {
+      } catch {
         console.error(`  ${c.red}✗${c.reset} Route error: ${path.relative(routesDir, filePath)}`);
       }
     } else if (fileDir.startsWith(dir + path.sep)) {
@@ -858,13 +858,13 @@ export async function registerRoutes(
     if (!stat.isDirectory()) {
       throw new Error(`Routes path is not a directory: ${resolvedRoutesDir}`);
     }
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException;
+  } catch (_error) {
+    const err = _error as NodeJS.ErrnoException;
     if (err.code === 'ENOENT') {
       console.error(`  ${c.red}✗${c.reset} Routes directory not found: ${resolvedRoutesDir}`);
       return routes;
     }
-    throw error;
+    throw _error;
   }
 
   console.log(
