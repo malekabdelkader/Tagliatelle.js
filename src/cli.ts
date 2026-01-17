@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * 🍝 Tagliatelle CLI
- * 
+ *
  * Create new Tagliatelle projects with a single command!
- * 
+ *
  * Usage:
  *   npx tagliatelle init my-api
  *   npx tagliatelle init my-api --skip-install
@@ -580,7 +580,9 @@ function runNpmInstall(targetDir: string) {
     execSync('npm install', { cwd: targetDir, stdio: 'inherit' });
     return true;
   } catch {
-    console.log(`\n${c.yellow}⚠${c.reset} Failed to install dependencies. Run ${c.cyan}npm install${c.reset} manually.\n`);
+    console.log(
+      `\n${c.yellow}⚠${c.reset} Failed to install dependencies. Run ${c.cyan}npm install${c.reset} manually.\n`
+    );
     return false;
   }
 }
@@ -591,8 +593,12 @@ ${c.green}✓ Project created successfully!${c.reset}
 
 ${c.bold}Next steps:${c.reset}
 
-  ${c.cyan}cd${c.reset} ${projectName}${skipInstall ? `
-  ${c.cyan}npm install${c.reset}` : ''}
+  ${c.cyan}cd${c.reset} ${projectName}${
+    skipInstall
+      ? `
+  ${c.cyan}npm install${c.reset}`
+      : ''
+  }
   ${c.cyan}npm run dev${c.reset}
 
 ${c.dim}Your API will be running at ${c.cyan}http://localhost:3000${c.reset}
@@ -613,57 +619,60 @@ ${c.yellow}🍝 Buon appetito!${c.reset}
 
 function main() {
   const args = process.argv.slice(2);
-  
+
   // Handle help
   if (args.includes('--help') || args.includes('-h') || args.length === 0) {
     printHelp();
     process.exit(0);
   }
-  
+
   const command = args[0];
-  
+
   if (command !== 'init') {
     console.log(`${c.red}Unknown command:${c.reset} ${command}\n`);
     printHelp();
     process.exit(1);
   }
-  
+
   const projectName = args[1];
-  
+
   if (!projectName) {
     console.log(`${c.red}Error:${c.reset} Please provide a project name\n`);
     console.log(`  ${c.cyan}npx tagliatelle init my-api${c.reset}\n`);
     process.exit(1);
   }
-  
+
   // Validate project name
   if (!/^[a-zA-Z0-9-_]+$/.test(projectName)) {
-    console.log(`${c.red}Error:${c.reset} Invalid project name. Use only letters, numbers, dashes, and underscores.\n`);
+    console.log(
+      `${c.red}Error:${c.reset} Invalid project name. Use only letters, numbers, dashes, and underscores.\n`
+    );
     process.exit(1);
   }
-  
+
   const skipInstall = args.includes('--skip-install');
   const targetDir = path.resolve(process.cwd(), projectName);
-  
+
   // Check if directory exists
   if (fs.existsSync(targetDir)) {
-    console.log(`${c.red}Error:${c.reset} Directory ${c.bold}${projectName}${c.reset} already exists.\n`);
+    console.log(
+      `${c.red}Error:${c.reset} Directory ${c.bold}${projectName}${c.reset} already exists.\n`
+    );
     process.exit(1);
   }
-  
+
   printBanner();
-  
+
   // Scaffold project
   scaffold(projectName, targetDir);
-  
+
   // Install dependencies
   if (!skipInstall) {
     runNpmInstall(targetDir);
   }
-  
+
   // Success message
   printSuccess(projectName, skipInstall);
 }
 
 main();
-
