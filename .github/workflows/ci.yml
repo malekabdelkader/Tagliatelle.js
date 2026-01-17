@@ -32,6 +32,9 @@ jobs:
       - name: Check types
         run: npx tsc --noEmit
 
+      - name: Run tests
+        run: npm test
+
   security:
     runs-on: ubuntu-latest
     steps:
