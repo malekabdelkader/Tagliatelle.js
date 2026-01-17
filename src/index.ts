@@ -1,6 +1,6 @@
 /**
  * 🍝 <Tag>liatelle.js - Main Export
- * 
+ *
  * The Declarative Backend Framework
  */
 
@@ -8,11 +8,11 @@ export {
   // JSX Factory
   h,
   Fragment,
-  
+
   // Core
   render,
   Context,
-  
+
   // Server Components
   Server,
   Get,
@@ -27,21 +27,21 @@ export {
   Cors,
   RateLimiter,
   Routes,
-  
+
   // Plugin System (Custom Tags)
   createPlugin,
-  
+
   // Response Components
   Response,
   Status,
   Body,
   Headers,
   Err,
-  
+
   // Middleware Components
   Augment,
   Halt,
-  
+
   // Types
   COMPONENT_TYPES,
 } from './tagliatelle.js';
