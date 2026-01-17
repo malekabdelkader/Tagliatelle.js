@@ -1,6 +1,6 @@
 /**
  * 🍝 <Tag>liatelle.js - The Declarative Backend Framework
- * 
+ *
  * This is the secret sauce that makes JSX work for backend routing.
  * It transforms your beautiful component tree into a blazing-fast Fastify server.
  */
@@ -16,7 +16,7 @@ const c = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
   dim: '\x1b[2m',
-  
+
   // Colors
   red: '\x1b[31m',
   green: '\x1b[32m',
@@ -26,7 +26,7 @@ const c = {
   cyan: '\x1b[36m',
   white: '\x1b[37m',
   gray: '\x1b[90m',
-  
+
   // Bright colors
   brightRed: '\x1b[91m',
   brightGreen: '\x1b[92m',
@@ -39,12 +39,18 @@ const c = {
 // Method colors
 const methodColor = (method: string): string => {
   switch (method) {
-    case 'GET': return c.brightGreen;
-    case 'POST': return c.brightYellow;
-    case 'PUT': return c.brightBlue;
-    case 'PATCH': return c.brightCyan;
-    case 'DELETE': return c.brightRed;
-    default: return c.white;
+    case 'GET':
+      return c.brightGreen;
+    case 'POST':
+      return c.brightYellow;
+    case 'PUT':
+      return c.brightBlue;
+    case 'PATCH':
+      return c.brightCyan;
+    case 'DELETE':
+      return c.brightRed;
+    default:
+      return c.white;
   }
 };
 
@@ -105,7 +111,7 @@ export function h(
   return {
     type,
     props: props || {},
-    children: children.flat().filter(Boolean)
+    children: children.flat().filter(Boolean),
   };
 }
 
@@ -149,7 +155,7 @@ export function Server({ port, host, children }: ServerProps): TagliatelleCompon
     __tagliatelle: COMPONENT_TYPES.SERVER,
     port: port ?? 3000,
     host: host ?? '0.0.0.0',
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -161,7 +167,7 @@ export function Get<TParams, TBody, TQuery, TResponse>(
     method: 'GET',
     path: props.path,
     handler: props.handler,
-    schema: props.schema
+    schema: props.schema,
   };
 }
 
@@ -173,7 +179,7 @@ export function Post<TParams, TBody, TQuery, TResponse>(
     method: 'POST',
     path: props.path,
     handler: props.handler,
-    schema: props.schema
+    schema: props.schema,
   };
 }
 
@@ -185,7 +191,7 @@ export function Put<TParams, TBody, TQuery, TResponse>(
     method: 'PUT',
     path: props.path,
     handler: props.handler,
-    schema: props.schema
+    schema: props.schema,
   };
 }
 
@@ -197,7 +203,7 @@ export function Delete<TParams, TBody, TQuery, TResponse>(
     method: 'DELETE',
     path: props.path,
     handler: props.handler,
-    schema: props.schema
+    schema: props.schema,
   };
 }
 
@@ -209,7 +215,7 @@ export function Patch<TParams, TBody, TQuery, TResponse>(
     method: 'PATCH',
     path: props.path,
     handler: props.handler,
-    schema: props.schema
+    schema: props.schema,
   };
 }
 
@@ -217,7 +223,7 @@ export function Middleware({ use, children }: MiddlewareProps): TagliatelleCompo
   return {
     __tagliatelle: COMPONENT_TYPES.MIDDLEWARE,
     use,
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -225,7 +231,7 @@ export function DB({ provider, children }: DBProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.DB,
     provider,
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -233,7 +239,7 @@ export function Logger({ level, children }: LoggerProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.LOGGER,
     level: level ?? 'info',
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -241,7 +247,7 @@ export function Group({ prefix, children }: GroupProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.GROUP,
     prefix: prefix ?? '',
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -250,7 +256,7 @@ export function Cors({ origin, methods, children }: CorsProps): TagliatelleCompo
     __tagliatelle: COMPONENT_TYPES.CORS,
     origin: origin ?? '*',
     methods: methods ?? ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -259,7 +265,7 @@ export function RateLimiter({ max, timeWindow, children }: RateLimiterProps): Ta
     __tagliatelle: COMPONENT_TYPES.RATE_LIMITER,
     max: max ?? 100,
     timeWindow: timeWindow ?? '1 minute',
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -271,7 +277,7 @@ export function Routes({ dir, prefix }: RoutesProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.ROUTES,
     dir,
-    prefix: prefix ?? ''
+    prefix: prefix ?? '',
   };
 }
 
@@ -281,23 +287,23 @@ export function Routes({ dir, prefix }: RoutesProps): TagliatelleComponent {
 
 /**
  * Create a custom plugin component (Custom Tag)
- * 
+ *
  * This allows you to create reusable JSX components that hook into Fastify.
  * Perfect for integrating Swagger, GraphQL, WebSockets, Metrics, etc.
- * 
+ *
  * @example
  * ```tsx
  * // Create a custom Swagger plugin
  * import { createPlugin } from 'tagliatelle';
  * import swagger from '@fastify/swagger';
  * import swaggerUi from '@fastify/swagger-ui';
- * 
+ *
  * interface SwaggerProps {
  *   title: string;
  *   version: string;
  *   path?: string;
  * }
- * 
+ *
  * export const Swagger = createPlugin<SwaggerProps>(
  *   'Swagger',
  *   async (fastify, props) => {
@@ -309,7 +315,7 @@ export function Routes({ dir, prefix }: RoutesProps): TagliatelleComponent {
  *     });
  *   }
  * );
- * 
+ *
  * // Use it!
  * <Server>
  *   <Swagger title="My API" version="1.0.0" />
@@ -327,7 +333,7 @@ export function createPlugin<TProps extends Record<string, any> = Record<string,
       __tagliatelle: COMPONENT_TYPES.PLUGIN,
       __handler: handler,
       __name: name,
-      ...props
+      ...props,
     };
   };
 }
@@ -343,7 +349,7 @@ export function createPlugin<TProps extends Record<string, any> = Record<string,
 export function Response({ children }: ResponseProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.RESPONSE,
-    children: children ? [children].flat() : []
+    children: children ? [children].flat() : [],
   };
 }
 
@@ -354,7 +360,7 @@ export function Response({ children }: ResponseProps): TagliatelleComponent {
 export function Status({ code }: StatusProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.STATUS,
-    code
+    code,
   };
 }
 
@@ -365,7 +371,7 @@ export function Status({ code }: StatusProps): TagliatelleComponent {
 export function Body<T>({ data }: BodyProps<T>): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.BODY,
-    data
+    data,
   };
 }
 
@@ -376,7 +382,7 @@ export function Body<T>({ data }: BodyProps<T>): TagliatelleComponent {
 export function Headers({ headers }: HeadersProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.HEADERS,
-    headers
+    headers,
   };
 }
 
@@ -389,7 +395,7 @@ export function Err({ code, message, details }: ErrProps): TagliatelleComponent 
     __tagliatelle: COMPONENT_TYPES.ERR,
     code: code ?? 500,
     message,
-    details
+    details,
   };
 }
 
@@ -406,7 +412,7 @@ import type { AugmentProps, HaltProps } from './types.js';
 export function Augment(props: AugmentProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.AUGMENT,
-    data: props
+    data: props,
   };
 }
 
@@ -418,7 +424,7 @@ export function Halt({ code, message }: HaltProps): TagliatelleComponent {
   return {
     __tagliatelle: COMPONENT_TYPES.HALT,
     code,
-    message
+    message,
   };
 }
 
@@ -441,7 +447,7 @@ function resolveResponse(element: TagliatelleNode): ResolvedResponse {
     statusCode: 200,
     headers: {},
     body: undefined,
-    isError: false
+    isError: false,
   };
 
   function processNode(node: TagliatelleNode): void {
@@ -455,7 +461,12 @@ function resolveResponse(element: TagliatelleNode): ResolvedResponse {
 
     // Resolve if it's a JSX element
     let resolved: TagliatelleNode | TagliatelleComponent = node;
-    if (typeof node === 'object' && node !== null && 'type' in node && typeof (node as TagliatelleElement).type === 'function') {
+    if (
+      typeof node === 'object' &&
+      node !== null &&
+      'type' in node &&
+      typeof (node as TagliatelleElement).type === 'function'
+    ) {
       const el = node as TagliatelleElement;
       const props = { ...el.props, children: el.children };
       const componentFn = el.type as (props: Record<string, unknown>) => TagliatelleComponent;
@@ -465,7 +476,7 @@ function resolveResponse(element: TagliatelleNode): ResolvedResponse {
     // Process TagliatelleComponent
     if (typeof resolved === 'object' && '__tagliatelle' in resolved) {
       const component = resolved as TagliatelleComponent;
-      
+
       switch (component.__tagliatelle) {
         case COMPONENT_TYPES.RESPONSE:
           // Process children
@@ -473,19 +484,19 @@ function resolveResponse(element: TagliatelleNode): ResolvedResponse {
             (component.children as TagliatelleNode[]).forEach(processNode);
           }
           break;
-          
+
         case COMPONENT_TYPES.STATUS:
           response.statusCode = component.code as number;
           break;
-          
+
         case COMPONENT_TYPES.BODY:
           response.body = component.data;
           break;
-          
+
         case COMPONENT_TYPES.HEADERS:
           Object.assign(response.headers, component.headers);
           break;
-          
+
         case COMPONENT_TYPES.ERR:
           response.isError = true;
           response.statusCode = component.code as number;
@@ -508,7 +519,7 @@ function resolveResponse(element: TagliatelleNode): ResolvedResponse {
  */
 function isJSXResponse(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
-  
+
   // Check if it's a TagliatelleComponent with response type
   if ('__tagliatelle' in value) {
     const component = value as TagliatelleComponent;
@@ -517,15 +528,15 @@ function isJSXResponse(value: unknown): boolean {
       COMPONENT_TYPES.STATUS,
       COMPONENT_TYPES.BODY,
       COMPONENT_TYPES.HEADERS,
-      COMPONENT_TYPES.ERR
+      COMPONENT_TYPES.ERR,
     ].includes(component.__tagliatelle);
   }
-  
+
   // Check if it's a JSX element that resolves to a response
   if ('type' in value && typeof (value as TagliatelleElement).type === 'function') {
     return true; // We'll resolve and check later
   }
-  
+
   return false;
 }
 
@@ -539,45 +550,50 @@ function isJSXResponse(value: unknown): boolean {
  */
 function resolveElement(element: TagliatelleNode): TagliatelleComponent | TagliatelleNode[] | null {
   if (!element) return null;
-  
+
   // If it's already a resolved component object
   if (typeof element === 'object' && '__tagliatelle' in element) {
     return element as TagliatelleComponent;
   }
-  
+
   // If it's an array, return as-is
   if (Array.isArray(element)) {
     return element;
   }
-  
+
   // If it's a JSX element with a function type (component)
   if (typeof element === 'object' && 'type' in element && typeof element.type === 'function') {
     const el = element as TagliatelleElement;
     const props = { ...el.props, children: el.children };
     const componentFn = el.type as (props: Record<string, unknown>) => TagliatelleNode;
     const result = componentFn(props);
-    
+
     // Recursively resolve if the result is another element
     const resolved = resolveElement(result);
-    
+
     // If the resolved result is a tagliatelle component and we had children in the JSX,
     // pass them through
-    if (resolved && !Array.isArray(resolved) && '__tagliatelle' in resolved && el.children.length > 0) {
+    if (
+      resolved &&
+      !Array.isArray(resolved) &&
+      '__tagliatelle' in resolved &&
+      el.children.length > 0
+    ) {
       resolved.children = el.children;
     }
-    
+
     return resolved;
   }
-  
+
   return null;
 }
 
 /**
  * Wraps a user handler to work with Fastify's request/reply system
- * 
+ *
  * IMPORTANT: Each middleware uses its CAPTURED config (db, etc.) from when it was defined.
  * This ensures visual hierarchy in JSX is respected:
- * 
+ *
  * <DB provider={db1}>
  *   <Middleware use={mw1} />  ← mw1 sees db1
  *   <DB provider={db2}>
@@ -586,11 +602,7 @@ function resolveElement(element: TagliatelleNode): TagliatelleComponent | Taglia
  *   </DB>
  * </DB>
  */
-function wrapHandler(
-  handler: Handler,
-  scopedMiddlewares: ScopedMiddleware[],
-  config: RouteConfig
-) {
+function wrapHandler(handler: Handler, scopedMiddlewares: ScopedMiddleware[], config: RouteConfig) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     // Use pretty logger from config
     const prettyLog = (config.prettyLog as {
@@ -604,7 +616,7 @@ function wrapHandler(
       error: () => {},
       debug: () => {},
     };
-    
+
     // Build base props from request - handler gets the FINAL config
     const props: HandlerProps = {
       params: request.params as Record<string, string>,
@@ -619,7 +631,7 @@ function wrapHandler(
 
     // Middleware timeout (30 seconds max)
     const MIDDLEWARE_TIMEOUT = 30000;
-    
+
     // Execute middleware chain
     // Each middleware gets its OWN captured config from when it was DEFINED in the JSX tree
     // This ensures visual hierarchy is respected:
@@ -640,14 +652,14 @@ function wrapHandler(
           // Full captured config accessible if middleware needs other context values
           __capturedConfig: capturedConfig,
         };
-        
+
         // Wrap middleware in timeout to prevent hanging
         const result = await withTimeout(
           async () => scopedMw.fn(middlewareProps, request, reply),
           MIDDLEWARE_TIMEOUT,
           'Middleware timeout'
         );
-        
+
         if (result === false) {
           return; // Middleware halted the chain
         }
@@ -660,7 +672,7 @@ function wrapHandler(
         const err = error as Error & { statusCode?: number };
         // Sanitize error message to prevent info leakage
         reply.status(err.statusCode ?? 500).send({
-          error: sanitizeErrorMessage(err, 'Middleware error')
+          error: sanitizeErrorMessage(err, 'Middleware error'),
         });
         return;
       }
@@ -669,21 +681,21 @@ function wrapHandler(
     try {
       // Execute the actual handler
       const result = await handler(props);
-      
+
       // If handler already sent response, don't send again
       if (reply.sent) return;
-      
+
       // Check if result is a JSX response
       if (result !== undefined) {
         if (isJSXResponse(result)) {
           // Resolve JSX response tree
           const response = resolveResponse(result as TagliatelleNode);
-          
+
           // Set headers
           for (const [key, value] of Object.entries(response.headers)) {
             reply.header(key, value);
           }
-          
+
           // Send response with status
           reply.status(response.statusCode).send(response.body);
         } else {
@@ -696,7 +708,7 @@ function wrapHandler(
         const err = error as Error & { statusCode?: number };
         // Sanitize error to prevent stack trace and info leakage
         reply.status(err.statusCode ?? 500).send({
-          error: sanitizeErrorMessage(err, 'Internal server error')
+          error: sanitizeErrorMessage(err, 'Internal server error'),
         });
       }
     }
@@ -730,8 +742,8 @@ async function processTree(
     case COMPONENT_TYPES.LOGGER:
       // Clone config with new logLevel
       fastify.log.level = component.level as string;
-      const loggerConfig = cloneConfig(config, { 
-        logLevel: component.level as RouteConfig['logLevel'] 
+      const loggerConfig = cloneConfig(config, {
+        logLevel: component.level as RouteConfig['logLevel'],
       });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
@@ -768,18 +780,18 @@ async function processTree(
         const cors = await import('@fastify/cors');
         await fastify.register(cors.default, {
           origin: component.origin as string | string[] | boolean,
-          methods: component.methods as string[]
+          methods: component.methods as string[],
         });
         console.log(`  ${c.green}✓${c.reset} CORS enabled`);
       } catch {
         console.warn(`  ${c.yellow}⚠${c.reset} CORS skipped (install @fastify/cors)`);
       }
       // Clone config with new cors for children
-      const corsConfig = cloneConfig(config, { 
-        cors: { 
-          origin: component.origin as string | string[] | boolean, 
-          methods: component.methods as string[] 
-        } 
+      const corsConfig = cloneConfig(config, {
+        cors: {
+          origin: component.origin as string | string[] | boolean,
+          methods: component.methods as string[],
+        },
       });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
@@ -790,11 +802,11 @@ async function processTree(
 
     case COMPONENT_TYPES.RATE_LIMITER:
       // Clone config with new rateLimit
-      const rateLimitConfig = cloneConfig(config, { 
-        rateLimit: { 
-          max: component.max as number, 
-          timeWindow: component.timeWindow as string 
-        } 
+      const rateLimitConfig = cloneConfig(config, {
+        rateLimit: {
+          max: component.max as number,
+          timeWindow: component.timeWindow as string,
+        },
       });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
@@ -808,8 +820,8 @@ async function processTree(
       // The middleware captures the CURRENT config (db, etc.) at definition time
       // This ensures visual hierarchy is respected in JSX
       const scopedMw = createScopedMiddleware(component.use as MiddlewareFunction, config);
-      const middlewareConfig = cloneConfig(config, { 
-        middleware: [...config.middleware, scopedMw] 
+      const middlewareConfig = cloneConfig(config, {
+        middleware: [...config.middleware, scopedMw],
       });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
@@ -820,8 +832,8 @@ async function processTree(
 
     case COMPONENT_TYPES.GROUP:
       // Clone config with concatenated prefix
-      const groupConfig = cloneConfig(config, { 
-        prefix: config.prefix + (component.prefix as string ?? '') 
+      const groupConfig = cloneConfig(config, {
+        prefix: config.prefix + ((component.prefix as string) ?? ''),
       });
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
@@ -833,18 +845,22 @@ async function processTree(
     case COMPONENT_TYPES.ROUTES:
       // File-based routing - pass the unified config
       const routesDir = component.dir as string;
-      const routesPrefix = config.prefix + (component.prefix as string ?? '');
-      await registerRoutes(fastify, {
-        routesDir,
-        prefix: routesPrefix
-      }, config);
+      const routesPrefix = config.prefix + ((component.prefix as string) ?? '');
+      await registerRoutes(
+        fastify,
+        {
+          routesDir,
+          prefix: routesPrefix,
+        },
+        config
+      );
       break;
 
     case COMPONENT_TYPES.PLUGIN:
       // Custom plugin (user-defined tag)
       const pluginHandler = component.__handler as PluginHandler;
       const pluginName = component.__name as string;
-      
+
       // Extract user props (exclude internal props)
       const pluginProps: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(component)) {
@@ -852,7 +868,7 @@ async function processTree(
           pluginProps[key] = value;
         }
       }
-      
+
       try {
         await pluginHandler(fastify, pluginProps, config);
         console.log(`  ${c.green}✓${c.reset} ${pluginName} ${c.dim}loaded${c.reset}`);
@@ -860,7 +876,7 @@ async function processTree(
         const error = err as Error;
         console.error(`  ${c.red}✗${c.reset} ${pluginName} failed: ${error.message}`);
       }
-      
+
       // Process children if any
       if (component.children) {
         for (const child of component.children as TagliatelleNode[]) {
@@ -878,23 +894,25 @@ async function processTree(
       const fullPath = config.prefix + (component.path as string);
       const method = component.method as HTTPMethods;
       const routeHandler = wrapHandler(component.handler as Handler, config.middleware, config);
-      
+
       if (component.schema) {
         fastify.route({
           method,
           url: fullPath,
           handler: routeHandler,
-          schema: component.schema as Record<string, unknown>
+          schema: component.schema as Record<string, unknown>,
         });
       } else {
         fastify.route({
           method,
           url: fullPath,
-          handler: routeHandler
+          handler: routeHandler,
         });
       }
       const m = component.method as string;
-      console.log(`  ${c.dim}├${c.reset} ${methodColor(m)}${m.padEnd(6)}${c.reset} ${c.white}${fullPath}${c.reset}`);
+      console.log(
+        `  ${c.dim}├${c.reset} ${methodColor(m)}${m.padEnd(6)}${c.reset} ${c.white}${fullPath}${c.reset}`
+      );
       break;
 
     default:
@@ -925,22 +943,22 @@ interface CLIOptions {
 function parseCliArgs(): CLIOptions {
   const args = process.argv.slice(2);
   const options: CLIOptions = {};
-  
+
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     // Help: -h, --help
     if (arg === '-h' || arg === '--help') {
       options.help = true;
       continue;
     }
-    
+
     // Open browser: -o, --open
     if (arg === '-o' || arg === '--open') {
       options.open = true;
       continue;
     }
-    
+
     // Port: --port=3001, -p=3001, --port 3001, -p 3001
     if (arg.startsWith('--port=') || arg.startsWith('-p=')) {
       const value = parseInt(arg.split('=')[1], 10);
@@ -957,7 +975,7 @@ function parseCliArgs(): CLIOptions {
       }
       continue;
     }
-    
+
     // Host: --host=localhost, -H=localhost, --host localhost, -H localhost
     if (arg.startsWith('--host=') || arg.startsWith('-H=')) {
       options.host = arg.split('=')[1];
@@ -969,7 +987,7 @@ function parseCliArgs(): CLIOptions {
       continue;
     }
   }
-  
+
   return options;
 }
 
@@ -1014,13 +1032,14 @@ ${c.bold}Examples:${c.reset}
 async function openBrowser(url: string): Promise<void> {
   const { exec } = await import('node:child_process');
   const { platform } = await import('node:os');
-  
-  const command = platform() === 'darwin' 
-    ? `open "${url}"` 
-    : platform() === 'win32' 
-      ? `start "${url}"` 
-      : `xdg-open "${url}"`;
-  
+
+  const command =
+    platform() === 'darwin'
+      ? `open "${url}"`
+      : platform() === 'win32'
+        ? `start "${url}"`
+        : `xdg-open "${url}"`;
+
   exec(command, (error) => {
     if (error) {
       console.log(`  ${c.dim}Could not open browser automatically${c.reset}`);
@@ -1036,7 +1055,7 @@ function getEffectivePort(cliOptions: CLIOptions, defaultPort: number): number {
   if (cliOptions.port !== undefined) {
     return cliOptions.port;
   }
-  
+
   // Priority 2: Environment variable
   const envPort = process.env.PORT;
   if (envPort) {
@@ -1045,7 +1064,7 @@ function getEffectivePort(cliOptions: CLIOptions, defaultPort: number): number {
       return parsed;
     }
   }
-  
+
   // Priority 3: Default from code
   return defaultPort;
 }
@@ -1058,13 +1077,13 @@ function getEffectiveHost(cliOptions: CLIOptions, defaultHost: string): string {
   if (cliOptions.host !== undefined) {
     return cliOptions.host;
   }
-  
+
   // Priority 2: Environment variable
   const envHost = process.env.HOST;
   if (envHost) {
     return envHost;
   }
-  
+
   // Priority 3: Default from code
   return defaultHost;
 }
@@ -1075,14 +1094,14 @@ function getEffectiveHost(cliOptions: CLIOptions, defaultHost: string): string {
 export async function render(element: TagliatelleNode): Promise<FastifyInstance> {
   // Parse CLI arguments first
   const cliOptions = parseCliArgs();
-  
+
   // Handle --help flag
   if (cliOptions.help) {
     printHelp();
   }
-  
+
   const resolved = resolveElement(element);
-  
+
   if (!resolved || Array.isArray(resolved) || resolved.__tagliatelle !== COMPONENT_TYPES.SERVER) {
     throw new Error('<Tag>liatelle: Root element must be a <Server> component!');
   }
@@ -1098,9 +1117,9 @@ ${c.yellow}  ╔═════════════════════�
   // Create Fastify instance with disabled logger (we do our own)
   const fastify = Fastify({
     logger: false, // Completely disable Fastify's logger
-    disableRequestLogging: true // We do our own request logging
+    disableRequestLogging: true, // We do our own request logging
   });
-  
+
   // Create our own pretty logger for handlers to use
   const prettyLog = {
     info: (msg: string) => console.log(`  ${c.dim}ℹ${c.reset} ${msg}`),
@@ -1108,12 +1127,12 @@ ${c.yellow}  ╔═════════════════════�
     error: (msg: string) => console.log(`  ${c.red}✗${c.reset} ${msg}`),
     debug: (msg: string) => console.log(`  ${c.dim}◦${c.reset} ${c.dim}${msg}${c.reset}`),
   };
-  
+
   // Create the initial unified RouteConfig
   const initialConfig: RouteConfig = {
     middleware: [],
     prefix: '',
-    prettyLog
+    prettyLog,
   };
 
   // Custom request logging hook
@@ -1122,12 +1141,12 @@ ${c.yellow}  ╔═════════════════════�
     const url = request.url;
     const status = reply.statusCode;
     const time = reply.elapsedTime?.toFixed(0) || '0';
-    
+
     const methodStr = `${methodColor(method)}${method.padEnd(6)}${c.reset}`;
     const urlStr = `${c.white}${url}${c.reset}`;
     const statusStr = `${statusColor(status)}${status}${c.reset}`;
     const timeStr = `${c.dim}${time}ms${c.reset}`;
-    
+
     console.log(`  ${methodStr} ${urlStr} ${c.dim}→${c.reset} ${statusStr} ${timeStr}`);
     done();
   });
@@ -1147,14 +1166,14 @@ ${c.yellow}  ╔═════════════════════�
 
   try {
     await fastify.listen({ port, host });
-    
+
     // Build the URL (use localhost for display if bound to 0.0.0.0)
     const displayHost = host === '0.0.0.0' ? 'localhost' : host;
     const serverUrl = `http://${displayHost}:${port}`;
-    
+
     console.log(`  ${c.green}✓${c.reset} ${c.bold}Server ready${c.reset} ${c.dim}→${c.reset} ${c.cyan}${serverUrl}${c.reset}
 `);
-    
+
     // Open browser if --open flag is set
     if (cliOptions.open) {
       await openBrowser(serverUrl);
@@ -1174,7 +1193,7 @@ ${c.yellow}  ╔═════════════════════�
 const Tagliatelle = {
   h,
   Fragment,
-  render
+  render,
 };
 
 export default Tagliatelle;
