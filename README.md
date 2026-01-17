@@ -14,7 +14,7 @@
   <strong>The Declarative Backend Framework.</strong> Build APIs with JSX. Yes, really.
 </p>
 
-📚 **[Live Documentation](https://malekabdelkader.github.io/Tagliatelle.js/)** | 📦 **[NPM Package](https://www.npmjs.com/package/tagliatelle)**
+📚 **[Live Documentation](https://malekabdelkader.github.io/Tagliatelle.js/)** | 📦 **[NPM Package](https://www.npmjs.com/package/tagliatelle)** | 📋 **[Changelog](./CHANGELOG.md)**
 
 `<Tag>liatelle.js` is a **TypeScript** backend framework built on top of **Fastify** that treats your API architecture like a component tree. Using JSX/TSX, you define your routes, middleware, and responses as a visual hierarchy.
 
