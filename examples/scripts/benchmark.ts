@@ -4,24 +4,51 @@
  * Compares performance with raw Fastify to verify zero overhead.
  *
  * Usage:
- *   npx tsx scripts/benchmark.ts
+ *   npx tsx examples/scripts/benchmark.ts
  *
  * Requirements:
  *   npm install -D autocannon
  */
 
 import { spawn, ChildProcess } from 'child_process';
-import { createServer } from 'http';
 
 const DURATION = 10; // seconds
 const CONNECTIONS = 100;
 const PIPELINING = 10;
+const WARMUP_REQUESTS = 100;
+const MAX_STARTUP_ATTEMPTS = 30;
+const STARTUP_POLL_INTERVAL = 200; // ms
 
 interface BenchmarkResult {
   requests: number;
   latencyAvg: number;
   latencyP99: number;
   throughput: number;
+}
+
+async function waitForServer(port: number): Promise<void> {
+  for (let i = 0; i < MAX_STARTUP_ATTEMPTS; i++) {
+    try {
+      const response = await fetch(`http://localhost:${port}/hello`);
+      if (response.ok) {
+        return;
+      }
+    } catch {
+      // Server not ready yet
+    }
+    await new Promise((resolve) => setTimeout(resolve, STARTUP_POLL_INTERVAL));
+  }
+  throw new Error(`Server on port ${port} failed to start`);
+}
+
+async function warmupServer(port: number): Promise<void> {
+  const promises: Promise<Response>[] = [];
+  for (let i = 0; i < WARMUP_REQUESTS; i++) {
+    promises.push(fetch(`http://localhost:${port}/hello`));
+  }
+  await Promise.all(promises);
+  // Small delay after warmup for JIT to settle
+  await new Promise((resolve) => setTimeout(resolve, 500));
 }
 
 async function runAutocannon(port: number): Promise<BenchmarkResult> {
@@ -53,13 +80,18 @@ async function runAutocannon(port: number): Promise<BenchmarkResult> {
 }
 
 async function startTagliatelleServer(): Promise<ChildProcess> {
-  const child = spawn('npx', ['tsx', 'examples/minimal/server.tsx'], {
+  const child = spawn('npx', ['tsx', '--tsconfig', 'tsconfig.examples.json', 'examples/minimal/server.tsx'], {
     stdio: 'pipe',
     cwd: process.cwd(),
   });
 
-  // Wait for server to start
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  // Wait for server to be ready using polling
+  await waitForServer(3000);
+
+  // Warmup requests for JIT optimization
+  console.log('      Warming up Tagliatelle.js server...');
+  await warmupServer(3000);
+
   return child;
 }
 
@@ -72,6 +104,11 @@ async function startFastifyServer(): Promise<{ close: () => void }> {
   });
 
   await app.listen({ port: 3001 });
+
+  // Warmup requests for JIT optimization
+  console.log('      Warming up Fastify server...');
+  await warmupServer(3001);
+
   return { close: () => app.close() };
 }
 
@@ -81,7 +118,8 @@ function formatNumber(n: number): string {
 
 async function main() {
   console.log('Starting Tagliatelle.js Benchmark\n');
-  console.log(`Duration: ${DURATION}s | Connections: ${CONNECTIONS} | Pipelining: ${PIPELINING}\n`);
+  console.log(`Duration: ${DURATION}s | Connections: ${CONNECTIONS} | Pipelining: ${PIPELINING}`);
+  console.log(`Warmup: ${WARMUP_REQUESTS} requests per server\n`);
   console.log('='.repeat(60));
 
   // Benchmark Tagliatelle

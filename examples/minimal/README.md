@@ -5,7 +5,7 @@ The simplest possible Tagliatelle.js server.
 ## Run
 
 ```bash
-npx tsx examples/minimal/server.tsx
+npx tsx --tsconfig tsconfig.examples.json examples/minimal/server.tsx
 ```
 
 ## Test

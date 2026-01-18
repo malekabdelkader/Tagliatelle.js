@@ -10,7 +10,7 @@
  * const hello = async () => (
  *   <Response>
  *     <Status code={200} />
- *     <Body>{{ message: 'Hello!' }}</Body>
+ *     <Body data={{ message: 'Hello!' }} />
  *   </Response>
  * );
  *

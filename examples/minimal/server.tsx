@@ -1,7 +1,7 @@
 /**
  * Minimal Tagliatelle.js Example
  *
- * Run with: npx tsx examples/minimal/server.tsx
+ * Run with: npx tsx --tsconfig tsconfig.examples.json examples/minimal/server.tsx
  */
 
 import { render, Server, Get, Response, Status, Body } from '../../src/index.js';
@@ -9,7 +9,7 @@ import { render, Server, Get, Response, Status, Body } from '../../src/index.js'
 const hello = async () => (
   <Response>
     <Status code={200} />
-    <Body>{{ message: 'Hello from Tagliatelle!' }}</Body>
+    <Body data={{ message: 'Hello from Tagliatelle!' }} />
   </Response>
 );
 
