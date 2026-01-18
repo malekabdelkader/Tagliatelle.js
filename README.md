@@ -8,6 +8,9 @@
   <a href="https://www.npmjs.com/package/tagliatelle"><img src="https://img.shields.io/npm/v/tagliatelle.svg" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/tagliatelle"><img src="https://img.shields.io/npm/dm/tagliatelle.svg" alt="npm downloads"></a>
   <a href="https://github.com/malekabdelkader/Tagliatelle.js/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/tagliatelle.svg" alt="license"></a>
+  <a href="https://github.com/malekabdelkader/Tagliatelle.js/actions/workflows/ci.yml"><img src="https://github.com/malekabdelkader/Tagliatelle.js/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Node.js-18+-green.svg" alt="Node.js">
 </p>
 
 <p align="center">
