@@ -3,32 +3,34 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 10
+      interval: "monthly" # Reduced frequency
+    open-pull-requests-limit: 5
+    # This ensures you only get updates for security vulnerabilities
+    # and ignores standard "new version" noise.
+    vulnerability-threshold: critical 
+    
+    groups:
+      # Combine ALL npm updates into one PR to save your sanity
+      all-npm-dependencies:
+        patterns:
+          - "*"
+    
     labels:
       - "dependencies"
     commit-message:
       prefix: "chore(deps)"
-    groups:
-      dev-dependencies:
-        patterns:
-          - "@types/*"
-          - "typescript"
-          - "tsx"
-        update-types:
-          - "minor"
-          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    # Grouping actions too, so you get 1 PR instead of 5
+    groups:
+      actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "github-actions"
     commit-message:
       prefix: "chore(actions)"
-
-
-
