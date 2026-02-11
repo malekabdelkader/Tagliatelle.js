@@ -1,7 +1,29 @@
 /**
- * 🍝 <Tag>liatelle.js - Main Export
- * 
- * The Declarative Backend Framework
+ * Tagliatelle.js - The Declarative Backend Framework
+ *
+ * Build APIs with JSX on top of Fastify.
+ *
+ * @example
+ * ```tsx
+ * import { render, Server, Get, Response, Status, Body } from 'tagliatelle';
+ *
+ * const hello = async () => (
+ *   <Response>
+ *     <Status code={200} />
+ *     <Body data={{ message: 'Hello!' }} />
+ *   </Response>
+ * );
+ *
+ * const App = () => (
+ *   <Server port={3000}>
+ *     <Get path="/hello" handler={hello} />
+ *   </Server>
+ * );
+ *
+ * render(<App />);
+ * ```
+ *
+ * @packageDocumentation
  */
 
 export {

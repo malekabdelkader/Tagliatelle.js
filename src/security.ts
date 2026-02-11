@@ -1,13 +1,32 @@
 /**
- * 🔒 <Tag>liatelle.js - Security Utilities
- * 
- * Additional security on top of Fastify's built-in protections:
- * - Error message sanitization (no stack trace leakage)
+ * Security Utilities for Tagliatelle.js
+ *
+ * Provides additional security layers on top of Fastify's built-in protections:
+ * - Error message sanitization (prevents stack trace leakage)
  * - Input validation helpers
  * - Middleware timeout wrapper
  * - Auth failure rate limiting
- * 
- * Note: Fastify handles prototype pollution at JSON parse level
+ *
+ * @example
+ * ```ts
+ * import { sanitizeErrorMessage, isValidId, AuthFailureTracker } from 'tagliatelle';
+ *
+ * // Sanitize errors before sending to client
+ * const safeMessage = sanitizeErrorMessage(error);
+ *
+ * // Validate user input
+ * if (!isValidId(params.id)) {
+ *   return { error: 'Invalid ID format' };
+ * }
+ *
+ * // Rate limit auth failures
+ * const tracker = new AuthFailureTracker({ maxFailures: 5 });
+ * if (tracker.isBlocked(ip)) {
+ *   return { error: 'Too many attempts' };
+ * }
+ * ```
+ *
+ * @module security
  */
 
 // ═══════════════════════════════════════════════════════════════════════════
