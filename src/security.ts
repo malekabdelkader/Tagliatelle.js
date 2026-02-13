@@ -1,12 +1,12 @@
 /**
  * 🔒 <Tag>liatelle.js - Security Utilities
- * 
+ *
  * Additional security on top of Fastify's built-in protections:
  * - Error message sanitization (no stack trace leakage)
  * - Input validation helpers
  * - Middleware timeout wrapper
  * - Auth failure rate limiting
- * 
+ *
  * Note: Fastify handles prototype pollution at JSON parse level
  */
 
@@ -38,9 +38,9 @@ const SENSITIVE_PATTERNS = [
  */
 export function sanitizeErrorMessage(error: unknown, fallback = 'An error occurred'): string {
   if (!error) return fallback;
-  
+
   let message: string;
-  
+
   if (error instanceof Error) {
     message = error.message;
   } else if (typeof error === 'string') {
@@ -48,25 +48,25 @@ export function sanitizeErrorMessage(error: unknown, fallback = 'An error occurr
   } else {
     return fallback;
   }
-  
+
   // Remove stack traces (take first line only)
   message = message.split('\n')[0];
-  
+
   // Check for sensitive patterns
   for (const pattern of SENSITIVE_PATTERNS) {
     if (pattern.test(message)) {
       return fallback;
     }
   }
-  
+
   // Remove file paths
   message = message.replace(/\/[\w/.-]+\.(js|ts|tsx|jsx)/g, '[path]');
-  
+
   // Limit length
   if (message.length > 200) {
     message = message.slice(0, 200) + '...';
   }
-  
+
   return message || fallback;
 }
 
@@ -80,7 +80,7 @@ export function safeErrorResponse(
   const response: { error: string; details?: unknown } = {
     error: sanitizeErrorMessage(error, 'Internal server error'),
   };
-  
+
   // Only include stack in development
   if (isDevelopment && error instanceof Error) {
     response.details = {
@@ -88,7 +88,7 @@ export function safeErrorResponse(
       stack: error.stack?.replace(/\(\/[^)]+\)/g, '([path])'),
     };
   }
-  
+
   return response;
 }
 
@@ -104,7 +104,7 @@ export function safeMerge<T extends object>(target: T, source: unknown): T {
   if (!source || typeof source !== 'object' || Array.isArray(source)) {
     return target;
   }
-  
+
   // Use Object.assign - Fastify has already sanitized the input
   Object.assign(target, source);
   return target;
@@ -127,7 +127,6 @@ export function isNonEmptyString(value: unknown): value is string {
 export function isSafeString(value: unknown): value is string {
   if (typeof value !== 'string') return false;
   if (value.includes('\0')) return false;
-  // eslint-disable-next-line no-control-regex
   if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(value)) return false;
   return true;
 }
@@ -173,7 +172,7 @@ export function withTimeout<T>(
     const timer = setTimeout(() => {
       reject(new Error(timeoutError));
     }, timeoutMs);
-    
+
     fn()
       .then((result) => {
         clearTimeout(timer);
@@ -198,70 +197,72 @@ export class AuthFailureTracker {
   private readonly maxFailures: number;
   private readonly windowMs: number;
   private readonly blockDurationMs: number;
-  
-  constructor(options: {
-    maxFailures?: number;
-    windowMs?: number;
-    blockDurationMs?: number;
-  } = {}) {
+
+  constructor(
+    options: {
+      maxFailures?: number;
+      windowMs?: number;
+      blockDurationMs?: number;
+    } = {}
+  ) {
     this.maxFailures = options.maxFailures ?? 5;
     this.windowMs = options.windowMs ?? 15 * 60 * 1000; // 15 min
     this.blockDurationMs = options.blockDurationMs ?? 60 * 60 * 1000; // 1 hour
   }
-  
+
   /**
    * Records an auth failure. Returns true if IP should be blocked.
    */
   recordFailure(ip: string): boolean {
     const now = Date.now();
     const record = this.failures.get(ip);
-    
+
     if (!record || now - record.firstFailure > this.windowMs) {
       this.failures.set(ip, { count: 1, firstFailure: now });
       return false;
     }
-    
+
     record.count++;
-    
+
     if (record.count >= this.maxFailures) {
       record.firstFailure = now - this.windowMs + this.blockDurationMs;
       return true;
     }
-    
+
     return false;
   }
-  
+
   /**
    * Checks if an IP is currently blocked
    */
   isBlocked(ip: string): boolean {
     const record = this.failures.get(ip);
     if (!record) return false;
-    
+
     const now = Date.now();
-    
+
     if (now - record.firstFailure > this.windowMs + this.blockDurationMs) {
       this.failures.delete(ip);
       return false;
     }
-    
+
     return record.count >= this.maxFailures;
   }
-  
+
   /**
    * Clears failures for an IP (on successful auth)
    */
   clearFailures(ip: string): void {
     this.failures.delete(ip);
   }
-  
+
   /**
    * Cleanup expired records
    */
   cleanup(): void {
     const now = Date.now();
     const maxAge = this.windowMs + this.blockDurationMs;
-    
+
     for (const [ip, record] of this.failures) {
       if (now - record.firstFailure > maxAge) {
         this.failures.delete(ip);
