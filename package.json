@@ -61,7 +61,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@fastify/cors": "^8.4.0",
+    "@fastify/cors": "^11.2.0",
     "fastify": "^4.24.0"
   },
   "devDependencies": {
